@@ -1,7 +1,7 @@
 {
   "name": "Runes & Remparts",
   "short_name": "Runes",
-  "description": "Prototype de siège rogue-like héroïque : la horde attaque la citadelle de tous les côtés pendant 10 minutes.",
+  "description": "Prototype de survivor héroïque : pilote ton héros au cœur de la horde et survis 10 minutes.",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",
