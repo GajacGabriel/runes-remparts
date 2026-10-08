@@ -1,38 +1,32 @@
 # Runes & Remparts
 
-Prototype jouable d’un survivor en heroic fantasy, pensé pour mobile **en portrait** (jouable d’un pouce).
+Prototype jouable d’un jeu d’action roguelite heroic fantasy pour **PC (clavier et souris)**, dans l’esprit du mode Swarm de League of Legends.
 Ce dépôt sert de terrain d’essai pour trouver le fun avant le passage sur Unity.
 
 **Jouer :** https://gajacgabriel.github.io/runes-remparts/
 
-## Le concept (v0.6 : butin et remparts)
+## Le concept (v0.7 : champions, sorts et missions)
 
-- **Tu pilotes ton héros** au milieu de la horde (joystick au doigt, ou ZQSD / WASD / flèches). Les armes tirent toutes seules : ton travail, c’est le placement.
-- **10 minutes de survie** : flux continu d’ennemis, marées chaque minute, encerclements, élites porteuses de coffres et **4 boss** aux attaques annoncées. Vaincre le boss de 10:00 gagne la run.
-- **Gemmes d’XP** : chaque niveau propose 3 cartes (nouvelle arme, amélioration, passif). 6 armes et 6 passifs maximum.
-- **Évolutions** : arme au niveau 5 + passif associé + 1 cristal (élites et boss) = arme légendaire.
-- **Butin** : les ennemis lâchent du bois et de la pierre, à ramasser en bougeant comme l’XP. Les élites, les boss et les coffres en donnent davantage.
-- **Gisements** : tes armes brisent aussi les arbres et rochers au halo doré (elles visent les ennemis d’abord, les gisements quand c’est calme ; les armes de zone les touchent en plein combat). Ils éclatent en ressources puis repoussent.
-- **Remparts** : trois ouvrages posés à tes pieds (boutons du bas ou touches 1, 2, 3).
-  - **Palissade** (6 bois) : un mur en travers de ta course. La horde bute dessus, ton héros passe.
-  - **Tour** (8 bois, 8 pierre) : tire sur les ennemis à portée ; ses dégâts suivent ton niveau.
-  - **Piège** (5 pierre) : blesse et ralentit tout ce qui passe, jusqu’à usure.
-  - Nombre limité par type : au-delà, le plus ancien s’effondre.
-  - Contres : les harpies volent par-dessus, les torches des pillards brûlent les murs, les boss fracassent tout.
-- **Asymétrie de factions** :
-  - **Grukk** (orcs) pille : les ennemis lâchent 60 % de butin en plus.
-  - **Durgan** (nains) : pierre ×1,6, et ses ouvrages sont 40 % plus solides et plus forts.
-  - **Lyriel** (elfes) : bois ×1,6.
-- **Ultime de faction** rechargé par les kills : WAAAGH !, Barrage runique, Nuit des étoiles.
-- Les coffres donnent une amélioration, du bois, de la pierre et une relance de cartes.
+- **Contrôles** : ZQSD / WASD / flèches pour bouger, **souris pour viser**. L’attaque du champion tire en continu vers le curseur (C bascule en visée automatique).
+- **Sorts** : **clic droit** (ou E) et **Espace**, chacun avec sa recharge. **Ultime** : **R**, rechargé par les kills.
+- **Trois champions** :
 
-## Installer comme une appli (Android)
+| Champion | Attaque (visée) | Clic droit | Espace | Ultime |
+|---|---|---|---|---|
+| **Grukk** (orc, mêlée) | Lancer de haches | **Charge** vers le curseur, renverse tout | **Tourbillon** qui aspire et broie | WAAAGH ! |
+| **Durgan** (nain, contrôle) | Marteau qui revient | **Tourelle runique** posée au curseur | **Séisme** qui étourdit | Barrage runique au curseur |
+| **Lyriel** (elfe, distance) | Arc perçant | **Roulade** d’esquive | **Volée** de flèches au curseur | Nuit des étoiles |
 
-1. Ouvre le lien dans Chrome.
-2. Menu ⋮ → **Ajouter à l’écran d’accueil** (ou **Installer l’application**).
-3. Lance le jeu depuis l’icône : il s’ouvre en plein écran et en portrait, et fonctionne hors ligne.
-
-Sur ordinateur, le jeu s’affiche dans un cadre au format téléphone.
+- **Build en partie** : chaque niveau propose 3 cartes : armes automatiques, passifs, et **talents** qui transforment les sorts (par exemple, une Charge qui laisse une traînée de braises, des Tourelles jumelles, une Volée de givre). Les évolutions d’armes restent : arme au niveau 5 + passif indiqué + 1 cristal.
+- **Missions** : chaque carte enchaîne 5 objectifs, puis un boss final. Les flèches dorées guident vers l’objectif.
+  - **Détruire les nids** qui crachent la horde.
+  - **Tenir la rune** : rester dans le cercle pour la charger, pendant que la horde afflue.
+  - **Traquer le porteur** de runes qui s’enfuit.
+  - **Escorter la caravane**, qui n’avance que si le champion reste près d’elle. Si elle tombe, la mission est perdue.
+  - Un **boss intermédiaire** arrive au milieu de la mission.
+- **Deux missions** : *Les Marches cendrées* (boss : Chef de guerre cendré) et *Le Col du Néant* (boss : Seigneur du Néant), en trois difficultés : Normal, Héroïque, Légendaire.
+- **Le camp, entre les missions** : chaque mission rapporte des **runes**, même en cas de défaite. On les dépense en améliorations permanentes (PV, dégâts, vitesse, recharge des sorts, XP, aimant, or de départ). Des **défis** débloquent des armes, une mission, un passif et les difficultés supérieures.
+- La progression est sauvegardée dans le navigateur.
 
 ## Itérer sur l’équilibrage
 
@@ -40,19 +34,19 @@ Tout tient dans `index.html`. Les réglages de design sont regroupés en haut du
 
 | Bloc | Contenu |
 |---|---|
-| `BAL` | Durée, débit d’ennemis, marées, PV et dégâts ennemis, XP, butin des ennemis, gisements, dégâts sur les ouvrages, boss |
-| `HEROES`, `FACTIONS`, `ULTS` | Héros, armes de départ, bonus de récolte et de construction, ultimes |
-| `BUILD` | Les 3 ouvrages : coût, maximum, PV, dégâts |
-| `WEAPONS` | Les 13 armes : stats de base, gains par niveau, évolution |
-| `PASSIVES` | Les 13 passifs (dont Butineur et Maçonnerie) |
-| `ENEMIES` | Bestiaire |
+| `BAL` | Débit et PV des ennemis, marées, XP, élites, encerclements, rythme des objectifs, PV des boss, runes gagnées |
+| `HEROES`, `FACTIONS`, `ULTS` | Champions, arme signature, sorts, ultimes |
+| `SPELLS` | Les 6 sorts : recharge, dégâts, talents |
+| `MAPS`, `DIFFS`, `OBJ` | Missions (objectifs, boss), difficultés |
+| `CAMP`, `CHALLENGES` | Améliorations permanentes et défis de déblocage |
+| `WEAPONS`, `PASSIVES`, `ENEMIES` | Armes, passifs, bestiaire |
 
-Le menu pause contient des **outils de test** (+1 niveau, +1 minute, bois et pierre, cristal, ultime, invincibilité), et la console expose `window.RR` pour simuler des runs.
+Le menu pause contient des **outils de test** (+1 niveau, +1 minute, or, cristal, sorts prêts, objectif suivant, invincibilité), et la console expose `window.RR` pour simuler des missions.
 
 ## Historique
 
 - v0.1 à v0.2 : tower defense sur chemins, puis héros, sorts et pixel art.
 - v0.3 : citadelle assiégée à 360°.
 - v0.4 : pivot vers un survivor, après des playtests où l’on « cliquait sans réfléchir ».
-- v0.5 : récolte de bois et de pierre, remparts posés en pleine horde, passage en portrait.
-- v0.6 : la récolte immobile est remplacée par le butin des ennemis et des gisements que les armes brisent.
+- v0.5 à v0.6 : récolte, butin et remparts, en portrait mobile. Pas concluant : « un survivor comme les autres ».
+- v0.7 : virage PC à la Swarm : visée à la souris, sorts actifs et talents, missions à objectifs, camp de progression.

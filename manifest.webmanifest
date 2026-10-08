@@ -1,12 +1,12 @@
 {
   "name": "Runes & Remparts",
   "short_name": "Runes",
-  "description": "Prototype de survivor héroïque : récolte, dresse tes remparts et survis 10 minutes à la horde.",
+  "description": "Prototype d’action roguelite heroic fantasy : champions, sorts visés à la souris, missions à objectifs et boss.",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",
-  "orientation": "portrait",
+  "orientation": "landscape",
   "background_color": "#15110d",
   "theme_color": "#15110d",
   "icons": [
