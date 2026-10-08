@@ -1,12 +1,12 @@
 {
   "name": "Runes & Remparts",
   "short_name": "Runes",
-  "description": "Prototype de survivor héroïque : pilote ton héros au cœur de la horde et survis 10 minutes.",
+  "description": "Prototype de survivor héroïque : récolte, dresse tes remparts et survis 10 minutes à la horde.",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",
-  "orientation": "landscape",
+  "orientation": "portrait",
   "background_color": "#15110d",
   "theme_color": "#15110d",
   "icons": [
