@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Prototype de survivor héroïque : récolte, dresse tes remparts et survis 10 minutes à la horde.">
+<meta name="description" content="Prototype de survivor héroïque : pille la horde, brise la roche, dresse tes remparts et survis 10 minutes.">
 <meta name="theme-color" content="#15110d">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -247,8 +247,8 @@ kbd { font-family: var(--f-body); font-size: .75em; font-weight: 800; padding: 0
   <section class="screen" id="scr-menu">
     <div class="menu">
       <div class="brand">
-        <p class="eyebrow">Prototype jouable · v0.5</p><h1>Runes <span>&amp;</span> Remparts</h1>
-        <p class="tag">Plonge ton héros au cœur de la horde. Récolte bois et pierre, dresse tes remparts, fais évoluer tes armes et survis 10 minutes.</p>
+        <p class="eyebrow">Prototype jouable · v0.6</p><h1>Runes <span>&amp;</span> Remparts</h1>
+        <p class="tag">Plonge ton héros au cœur de la horde. Ramasse bois et pierre sur la horde, dresse tes remparts, fais évoluer tes armes et survis 10 minutes.</p>
       </div>
       <div class="facs" id="facs"></div>
       <div class="menu-actions">
@@ -265,9 +265,9 @@ kbd { font-family: var(--f-body); font-size: .75em; font-weight: 800; padding: 0
           <li><b>Évolution</b> : arme au niveau 5 + passif indiqué + 1 cristal (élites, boss).</li>
           <li>L’<b>ultime</b> se charge en tuant (bouton doré, <kbd>E</kbd> ou <kbd>Espace</kbd>).</li>
         </ul>
-        <h4>Récolter et bâtir</h4>
+        <h4>Butin et remparts</h4>
         <ul>
-          <li>Reste près d’un <b>bosquet</b> (bois) ou d’un <b>rocher</b> (pierre) pour récolter. C’est bien plus rapide <b>immobile</b>… à tes risques.</li>
+          <li>Les ennemis lâchent du <b>bois</b> 🪵 et de la <b>pierre</b> 🪨. Tes armes <b>brisent aussi les arbres et rochers</b> au halo doré : ils éclatent en ressources.</li>
           <li>Les boutons du bas posent un ouvrage <b>à tes pieds</b> : <b>palissade</b>, <b>tour</b> ou <b>piège</b> (<kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd>).</li>
           <li>Ton héros <b>traverse ses remparts</b>, pas la horde. Mais les harpies volent, les torches brûlent et les boss fracassent tout.</li>
         </ul>
@@ -368,12 +368,14 @@ const BAL = {
   xpNeed: L => Math.round(6 + 8 * L + .65 * L * L),
   rerolls: 2,                                      // relances de cartes au départ (+1 par coffre)
   foodChance: .006, vacChance: .002,
-  // Récolte : on reste près d’un gisement ; bien plus rapide à l’arrêt.
-  harvestR: 74, harvestRate: 1.9, harvestMove: .3,
-  nodes: { bois: { stock: 16, regrow: 45 }, pierre: { stock: 16, regrow: 55 } },
+  // Butin : les ennemis lâchent du bois ou de la pierre, à ramasser comme l’XP. Plus rare quand la horde grossit.
+  lootChance: m => .1 / (1 + .6 * m),
+  eliteLoot: m => 2 + Math.round(.4 * m), bossLoot: 10,
+  // Gisements : arbres et rochers que tes armes brisent ; ils éclatent en ressources puis repoussent.
+  nodes: { bois: { hp: 50, yield: 5, regrow: 60 }, pierre: { hp: 80, yield: 5, regrow: 70 } },
+  nodeHp: m => 1 + .8 * m + .1 * m * m, nodeYield: m => 1 + .05 * m,
   // Constructions : les ennemis tapent moins fort sur les murs que sur le héros.
-  structDmg: .4, bossStructDmg: 5,             // au-delà du maximum d’un type, le plus ancien s’effondre
-  lootChance: .02,                                 // pillage orc : chance qu’un ennemi lâche du bois ou de la pierre
+  structDmg: .4, bossStructDmg: 5,
   eliteHp: 8, eliteXp: 15,
   encircle: [90, 240, 390, 510],                   // encerclements (secondes)
   bosses: [{ t: 150, type: 'boss2' }, { t: 300, type: 'boss1' }, { t: 450, type: 'boss3' }, { t: 600, type: 'boss4', final: true }],
@@ -384,18 +386,18 @@ const BAL = {
 
 // ═════════════════════════ Héros & factions ═════════════════════════
 const FACTIONS = {
-  orcs: { id: 'orcs', name: 'Orcs', title: 'La Horde de Rouille', color: '#d4683f', pitch: 'Un colosse qui fauche tout. Récolte mal, mais pille : les ennemis tués lâchent du bois et de la pierre.' },
-  nains: { id: 'nains', name: 'Nains', title: 'Les Clans de l’Enclume', color: '#6ea6d6', pitch: 'Un mineur blindé : il casse la pierre deux fois plus vite, et ses tours sont les plus solides.' },
-  elfes: { id: 'elfes', name: 'Elfes', title: 'La Cour Sylvestre', color: '#b49af0', pitch: 'Une archère rapide et fragile. Elle récolte le bois en marchant, sans jamais s’arrêter.' },
+  orcs: { id: 'orcs', name: 'Orcs', title: 'La Horde de Rouille', color: '#d4683f', pitch: 'Un colosse qui fauche tout et se soigne en tuant. Pilleur : les ennemis lâchent bien plus de butin.' },
+  nains: { id: 'nains', name: 'Nains', title: 'Les Clans de l’Enclume', color: '#6ea6d6', pitch: 'Un mineur blindé : son marteau brise la roche, et ses remparts sont les plus solides.' },
+  elfes: { id: 'elfes', name: 'Elfes', title: 'La Cour Sylvestre', color: '#b49af0', pitch: 'Une archère rapide et fragile qui frappe de loin. Elle tire le meilleur bois des forêts.' },
 };
-// harvest : vitesse de récolte par ressource ; harvestMove : part conservée en marchant ; build : bonus des ouvrages.
+// gain : multiplicateur de bois et de pierre ramassés ; lootMul : butin des ennemis ; build : bonus des ouvrages.
 const HEROES = {
   orcs: { name: 'Grukk', title: 'Chef de guerre', look: 'grukk', hp: 150, speed: 150, armor: 1, regen: .3, magnet: 1, lifeOnKill: .2, start: 'haches', pool: ['haches', 'lancer', 'totem'],
-    harvest: { bois: .8, pierre: .8 }, loot: true, perk: 'Pillage : 2 % des ennemis lâchent du bois ou de la pierre.' },
+    lootMul: 1.6, perk: 'Pillage : les ennemis lâchent 60 % de butin en plus.' },
   nains: { name: 'Durgan', title: 'Briseur de rocs', look: 'durgan', hp: 180, speed: 136, armor: 2, regen: .2, magnet: 1, start: 'marteau', pool: ['marteau', 'tourelle', 'mines'],
-    harvest: { bois: .9, pierre: 2 }, build: 1.4, perk: 'Mineur : pierre ×2, ouvrages +40 % (PV et dégâts).' },
+    gain: { pierre: 1.6 }, build: 1.4, perk: 'Mineur : pierre ×1,6, ouvrages +40 % (PV et dégâts).' },
   elfes: { name: 'Lyriel', title: 'Rôdeuse lunaire', look: 'lyriel', hp: 125, speed: 168, armor: 0, regen: .4, magnet: 1.3, start: 'arc', pool: ['arc', 'lames', 'ronces'],
-    harvest: { bois: 1.5, pierre: .9 }, harvestMove: .75, perk: 'Sylvestre : bois ×1,5, récolte presque aussi vite en marchant.' },
+    gain: { bois: 1.6 }, perk: 'Sylvestre : bois ×1,6.' },
 };
 
 // ═════════════════════════ Constructions ═════════════════════════
@@ -467,7 +469,7 @@ const PASSIVES = {
   vigueur: { name: 'Vigueur', icon: '❤️', max: 5, desc: '+20 PV max (et soigne d’autant).' },
   regen: { name: 'Régénération', icon: '💚', max: 5, desc: '+0,3 PV par seconde.' },
   aimant: { name: 'Aimant', icon: '🧲', max: 5, desc: '+30 % de portée de ramassage.' },
-  recolte: { name: 'Récolteur', icon: '🧺', max: 5, desc: '+30 % de vitesse de récolte.' },
+  recolte: { name: 'Butineur', icon: '🧺', max: 5, desc: '+25 % de bois et de pierre (ennemis et gisements).' },
   maconnerie: { name: 'Maçonnerie', icon: '🛠️', max: 5, desc: 'Ouvrages : +25 % de PV, +15 % de dégâts.' },
   croissance: { name: 'Croissance', icon: '📈', max: 5, desc: '+8 % d’XP.' },
   duree: { name: 'Persistance', icon: '⌛', max: 5, desc: '+12 % de durée des effets.' },
@@ -485,6 +487,8 @@ const ENEMIES = {
   boss3: { name: 'Golem de cendres', boss: true, hp: 8000, spd: 40, dmg: 32, xp: 100, r: 24, armor: 4, col: '#5b4a44', ai: 'slam', regen: .004 },
   boss4: { name: 'Seigneur du Néant', boss: true, hp: 10000, spd: 46, dmg: 40, xp: 150, r: 24, col: '#4a1d66', ai: 'void' },
 };
+// Butin de chaque ennemi : [ressource, quantité]. « mix » = bois ou pierre au hasard.
+const LOOT = { rodeur: ['mix', 1], coureur: ['bois', 1], harpie: ['pierre', 1], pillard: ['bois', 2], brute: ['pierre', 2] };
 
 // ═════════════════════════ Son (synthétisé, aucun fichier) ═════════════════════════
 const SFX = (() => {
@@ -695,7 +699,7 @@ function newRun(fac) {
     hero: { x: BAL.world.w / 2, y: BAL.world.h / 2, vx: 0, vy: 0, hp: H.hp, maxHp: H.hp, face: 1, mv: 0, hurt: 0, ph: 0 },
     weapons: [], passives: {}, mods: null,
     level: 1, xp: 0, pendingLv: 0, cr: 0, kills: 0, rerolls: BAL.rerolls, offer: null,
-    res: { bois: 0, pierre: 0 }, nodes: NODE_POS.map(p => ({ ...p, stock: BAL.nodes[p.k].stock, acc: 0, regrow: 0, shake: 0 })), harvest: null,
+    res: { bois: 0, pierre: 0 }, nodes: NODE_POS.map(p => ({ ...p, node: true, id: 1e7 + p.id, r: 24, hp: BAL.nodes[p.k].hp, maxHp: BAL.nodes[p.k].hp, dead: false, fly: false, hitT: {}, regrow: 0, shake: 0, flash: 0 })),
     structs: [], sdirty: true, lastDir: { x: 1, y: 0 },
     bw: { tour: { id: 'tour', dmg: 0, kills: 0 }, piege: { id: 'piege', dmg: 0, kills: 0 } },
     enemies: [], projs: [], eprojs: [], turrets: [], booms: [], mines: [], zones: [], meteors: [], drops: [], tele: [],
@@ -721,7 +725,7 @@ function recomputeMods() {
     speed: H.speed * (1 + .08 * plv('vitesse')), armor: H.armor + plv('armure'), maxHp: H.hp + 20 * plv('vigueur'),
     regen: H.regen + .3 * plv('regen'), magnet: BAL.magnet * H.magnet * (1 + .3 * plv('aimant')),
     xp: 1 + .08 * plv('croissance'), dur: 1 + .12 * plv('duree'),
-    harvest: 1 + .3 * plv('recolte'), buildHp: (H.build || 1) * (1 + .25 * plv('maconnerie')), buildDmg: (H.build || 1) * (1 + .15 * plv('maconnerie')),
+    loot: 1 + .25 * plv('recolte'), buildHp: (H.build || 1) * (1 + .25 * plv('maconnerie')), buildDmg: (H.build || 1) * (1 + .15 * plv('maconnerie')),
   };
   const h = G.hero;
   if (old && G.mods.maxHp > old.maxHp) h.hp += G.mods.maxHp - old.maxHp;
@@ -783,7 +787,10 @@ const GC = 40;
 let GRID = new Map();
 function gridBuild() {
   GRID = new Map();
-  for (const e of G.enemies) { if (e.dead) continue; const k = ((e.x / GC) | 0) * 1000 + ((e.y / GC) | 0); let c = GRID.get(k); if (!c) GRID.set(k, c = []); c.push(e); }
+  const put = e => { const k = ((e.x / GC) | 0) * 1000 + ((e.y / GC) | 0); let c = GRID.get(k); if (!c) GRID.set(k, c = []); c.push(e); };
+  for (const e of G.enemies) if (!e.dead) put(e);
+  // Les gisements vivent dans la même grille : toutes les armes peuvent les frapper, et la horde les contourne.
+  for (const n of G.nodes) if (!n.dead) put(n);
 }
 function forNear(x, y, r, fn) {
   const x0 = Math.floor((x - r - 30) / GC), x1 = Math.floor((x + r + 30) / GC), y0 = Math.floor((y - r - 30) / GC), y1 = Math.floor((y + r + 30) / GC);
@@ -795,7 +802,9 @@ function forNear(x, y, r, fn) {
 function nearest(x, y, r, n = 1, exclude) {
   const out = [];
   forNear(x, y, r, e => { if (!exclude || !exclude.has(e.id)) out.push(e); });
-  out.sort((a, b) => d2(x, y, a.x, a.y) - d2(x, y, b.x, b.y));
+  // Les armes visent d’abord les ennemis ; un gisement n’est pris pour cible que si la voie est libre.
+  const key = e => d2(x, y, e.x, e.y) + (e.node ? 1e7 : 0);
+  out.sort((a, b) => key(a) - key(b));
   return out.slice(0, n);
 }
 // Grille des ouvrages : chaque mur ou tour est fait de cercles de collision.
@@ -1003,6 +1012,7 @@ function hurtHero(d) {
 // ═════════════════════════ Dégâts ═════════════════════════
 function dmgEnemy(e, amount, o = {}) {
   if (e.dead) return;
+  if (e.node) { hitNode(e, amount); return; }
   let dmg = amount;
   if (e.T.armor && !o.magic) dmg = Math.max(dmg * .3, dmg - e.T.armor);
   let crit = false;
@@ -1022,7 +1032,10 @@ function killEnemy(e, w) {
   const T = e.T, xp = T.xp * (e.elite ? BAL.eliteXp : 1);
   if (G.H.lifeOnKill && !G.deadT) G.hero.hp = Math.min(G.hero.maxHp, G.hero.hp + G.H.lifeOnKill); // Soif de sang (orcs)
   drop(e.x, e.y, 'xp', xp);
-  if (G.H.loot && Math.random() < BAL.lootChance) drop(e.x + rand(-8, 8), e.y + rand(-8, 8), Math.random() < .55 ? 'bois' : 'pierre', 2); // Pillage (orcs)
+  // Butin : bois ou pierre selon l’ennemi (les pillards portent du bois, les brutes d’obsidienne de la pierre).
+  const LT = LOOT[e.type];
+  if (LT && Math.random() < BAL.lootChance(G.m) * (G.H.lootMul || 1) * G.mods.loot) drop(e.x + rand(-8, 8), e.y + rand(-8, 8), LT[0] === 'mix' ? (Math.random() < .55 ? 'bois' : 'pierre') : LT[0], LT[1]);
+  if (e.elite || e.boss) { const v = e.boss ? BAL.bossLoot : BAL.eliteLoot(G.m); burstRes(e.x, e.y, 'bois', v); burstRes(e.x, e.y, 'pierre', v); }
   if (e.elite) { drop(e.x + 14, e.y, 'chest', 1); drop(e.x - 14, e.y, 'cr', 1); }
   if (e.boss) { drop(e.x, e.y + 20, 'chest', 1); for (let i = 0; i < 3; i++) drop(e.x + rand(-30, 30), e.y + rand(-30, 30), 'cr', 1); }
   if (Math.random() < BAL.foodChance) drop(e.x, e.y, 'food', 30);
@@ -1079,37 +1092,40 @@ function collect(d) {
 function openChest() {
   const opts = offerPool().filter(o => o.kind === 'up' || o.kind === 'pass');
   const o = opts.length ? pick(opts) : null;
-  const g = 6 + Math.round(2 * G.m);
+  const g = 3 + Math.round(.5 * G.m);
   G.res.bois += g; G.res.pierre += g; G.rerolls++;
   SFX.play('chest'); ring(G.hero.x, G.hero.y, 80, '#ffd76a', .6); sparkle(G.hero.x, G.hero.y - 30, '#ffd76a', 24);
   toast(`Coffre : ${o ? o.title + ' · ' : ''}+${g}${NB}bois, +${g}${NB}pierre, +1 relance`, 'gold');
   if (o) applyOffer(o);
 }
-// ═════════════════════════ Récolte ═════════════════════════
+// ═════════════════════════ Butin et gisements ═════════════════════════
+// Ressource ramassée : bonus de faction (nains : pierre, elfes : bois) et passif Butineur.
 function gainRes(k, v, x, y) {
-  G.res[k] += v; G.stats.harvested += v;
-  addText(x + rand(-6, 6), y, `+${v}`, k === 'bois' ? '#e8b878' : '#d6dee6', 15, v > 1);
-  const h = G.hero;
-  if (G.parts.length < 800) G.parts.push({ x, y, vx: (h.x - x) / .28, vy: (h.y - 30 - y) / .28, t: 0, T: .28, c: k === 'bois' ? '#a8703a' : '#aeb6c0', r: 3, g: 0 });
+  const f = v * ((G.H.gain && G.H.gain[k]) || 1), g = Math.floor(f) + (Math.random() < f % 1 ? 1 : 0); // toujours un entier
+  if (!g) return;
+  G.res[k] += g; G.stats.harvested += g;
+  addText(x + rand(-6, 6), y, `+${g}`, k === 'bois' ? '#e8b878' : '#d6dee6', 15, g > 1);
   SFX.play(k === 'bois' ? 'chop' : 'mine');
 }
-// On récolte le gisement le plus proche tant qu’on reste dans son rayon (bien plus vite à l’arrêt).
-function updateHarvest(dt) {
-  const h = G.hero, H = G.H, R = BAL.harvestR;
-  let best = null, bd = R * R;
+// Éclatement : plusieurs morceaux de bois ou de pierre giclent autour d’un point.
+function burstRes(x, y, k, v) {
+  v = Math.max(1, Math.round(v)); const n = Math.min(8, v), each = Math.floor(v / n);
+  for (let i = 0; i < n; i++) { const a = rand(0, TAU), r = rand(16, 46); drop(x + Math.cos(a) * r, y + Math.sin(a) * r * .8, k, each + (i < v % n ? 1 : 0)); }
+}
+// Les armes frappent les gisements comme des ennemis ; brisés, ils éclatent en ressources.
+function hitNode(n, d) {
+  n.hp -= d; n.shake = .12; n.flash = .06;
+  if (G.texts.length < 70 && Math.random() < .5) addText(n.x + rand(-8, 8), n.y - 56, Math.max(1, Math.round(d)), '#e8dcc0', 13);
+  if (n.hp > 0) { if (Math.random() < .25) SFX.play(n.k === 'bois' ? 'chop' : 'mine'); return; }
+  n.dead = true; n.regrow = BAL.nodes[n.k].regrow;
+  burstRes(n.x, n.y + 6, n.k, BAL.nodes[n.k].yield * BAL.nodeYield(G.m) * G.mods.loot);
+  puff(n.x, n.y - 20, n.k === 'bois' ? '#9ab83c' : '#868b93', 18); shake(2); SFX.play('crash');
+}
+function updateNodes(dt) {
   for (const n of G.nodes) {
-    n.shake = Math.max(0, n.shake - dt);
-    if (n.stock <= 0) { n.regrow -= dt; if (n.regrow <= 0) { n.stock = BAL.nodes[n.k].stock; n.acc = 0; } continue; }
-    const q = d2(n.x, n.y, h.x, h.y); if (q < bd) { bd = q; best = n; }
-  }
-  G.harvest = G.deadT ? null : best;
-  if (!G.harvest) return;
-  const n = best, moving = h.mv > 0;
-  n.acc += BAL.harvestRate * G.mods.harvest * H.harvest[n.k] * (moving ? (H.harvestMove ?? BAL.harvestMove) : 1) * dt;
-  while (n.acc >= 1 && n.stock > 0) {
-    n.acc -= 1; n.stock--; n.shake = .12;
-    gainRes(n.k, 1, n.x + rand(-14, 14), n.y - 34);
-    if (n.stock <= 0) { n.regrow = BAL.nodes[n.k].regrow; n.acc = 0; addText(n.x, n.y - 60, 'Épuisé', '#b6a586', 14); }
+    n.shake = Math.max(0, n.shake - dt); n.flash = Math.max(0, n.flash - dt);
+    if (n.dead) { n.regrow -= dt; if (n.regrow <= 0) { n.dead = false; n.maxHp = n.hp = BAL.nodes[n.k].hp * BAL.nodeHp(G.m); n.hitT = {}; n.pop = .4; } }
+    else if (n.pop) n.pop = Math.max(0, n.pop - dt);
   }
 }
 
@@ -1172,7 +1188,7 @@ function updateStructs(dt) {
       if (s.tick > 0) continue;
       const B = BUILD.piege; s.tick = B.tick;
       let n = 0;
-      forNear(s.x, s.y, B.radius, e => { if (e.fly) return; n++; dmgEnemy(e, B.dmg(G.level) * m.might * m.buildDmg, { w: G.bw.piege, slow: B.slow, quiet: Math.random() < .6 }); });
+      forNear(s.x, s.y, B.radius, e => { if (e.fly || e.node) return; n++; dmgEnemy(e, B.dmg(G.level) * m.might * m.buildDmg, { w: G.bw.piege, slow: B.slow, quiet: Math.random() < .6 }); });
       if (n) { s.uses -= n; s.snap = .15; if (s.uses <= 0) destroyStruct(s); }
     }
   }
@@ -1484,7 +1500,7 @@ function update(dt) {
   if (G.started) { G.t += dt; G.m = G.t / 60; }
   gridBuild();
   updateHero(dt);
-  updateHarvest(dt);
+  updateNodes(dt);
   updateCam();
   updateSpawns(dt);
   updateEnemies(dt);
@@ -1665,22 +1681,21 @@ function drawTurret(tu, t) {
   ctx.globalAlpha = 1;
 }
 // ── Gisements ──
-// Cercle de récolte au sol : discret de loin, lumineux quand on récolte, avec le stock restant.
+// Halo au sol : signale qu’un arbre ou un rocher se brise pour des ressources ; arc de repousse une fois brisé.
 function drawNodeRing(n, t) {
-  const h = G.hero, R = BAL.harvestR, near = d2(n.x, n.y, h.x, h.y) < 320 * 320, act = G.harvest === n;
   const col = n.k === 'bois' ? '#e8b878' : '#cfe0ee';
-  if (n.stock <= 0) {
-    if (!near) return;
+  if (n.dead) {
     const f = 1 - n.regrow / BAL.nodes[n.k].regrow;
-    ctx.strokeStyle = 'rgba(200,190,170,.25)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(n.x, n.y, R, -Math.PI / 2, -Math.PI / 2 + TAU * f); ctx.stroke();
+    ctx.strokeStyle = 'rgba(200,190,170,.22)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(n.x, n.y + 4, 30, 13, 0, -Math.PI / 2, -Math.PI / 2 + TAU * f); ctx.stroke();
     return;
   }
-  ctx.fillStyle = hexA(col, act ? .1 + .04 * Math.sin(t * 8) : .04); circle(n.x, n.y, R); ctx.fill();
-  ctx.setLineDash(act ? [] : [7, 7]); ctx.strokeStyle = hexA(col, act ? .75 : near ? .35 : .16); ctx.lineWidth = act ? 2.5 : 2; circle(n.x, n.y, R); ctx.stroke(); ctx.setLineDash([]);
-  if (act) { ctx.strokeStyle = col; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(n.x, n.y, R + 6, -Math.PI / 2, -Math.PI / 2 + TAU * n.stock / BAL.nodes[n.k].stock); ctx.stroke(); }
+  ctx.fillStyle = hexA(col, .1 + .04 * Math.sin(t * 2 + n.seed)); ellipse(n.x, n.y + 4, 40, 16); ctx.fill();
+  ctx.strokeStyle = hexA(col, .35); ctx.lineWidth = 1.5; ellipse(n.x, n.y + 4, 40, 16); ctx.stroke();
 }
 function drawNode(n, t) {
-  const x = n.x + (n.shake > 0 ? Math.sin(t * 90) * 2.5 : 0), y = n.y, full = n.stock > 0;
+  const x = n.x + (n.shake > 0 ? Math.sin(t * 90) * 2.5 : 0), y = n.y, full = !n.dead;
+  if (full && n.hp < n.maxHp) hpBar(n.x, y - 66, 36, n.hp / n.maxHp, n.k === 'bois' ? '#e8b878' : '#cfe0ee');
+  if (n.pop) { ctx.save(); ctx.translate(n.x, y); ctx.scale(1 - n.pop, 1 - n.pop); ctx.translate(-n.x, -y); }
   ctx.fillStyle = 'rgba(0,0,0,.28)'; ellipse(n.x + 3, y + 4, 34, 12); ctx.fill();
   if (n.k === 'bois') {
     // Bosquet de bouleaux et tas de bûches : bien distinct des sapins du décor.
@@ -1694,7 +1709,7 @@ function drawNode(n, t) {
   } else {
     // Rocher veiné de quartz
     if (!full) { for (const [dx, dy, r] of [[-10, 2, 6], [6, 4, 7], [0, -3, 5]]) { ctx.fillStyle = '#6a6e74'; circle(x + dx, y + dy, r); ctx.fill(); } return; }
-    const k = .75 + .25 * n.stock / BAL.nodes.pierre.stock;
+    const k = .75 + .25 * n.hp / n.maxHp;
     ctx.fillStyle = '#5d6168'; ctx.beginPath(); ctx.moveTo(x - 30 * k, y + 6); ctx.lineTo(x - 24 * k, y - 22 * k); ctx.lineTo(x - 6 * k, y - 38 * k); ctx.lineTo(x + 16 * k, y - 32 * k); ctx.lineTo(x + 30 * k, y - 10 * k); ctx.lineTo(x + 28 * k, y + 7); ctx.closePath(); ctx.fill();
     ctx.fillStyle = '#868b93'; ctx.beginPath(); ctx.moveTo(x - 24 * k, y - 22 * k); ctx.lineTo(x - 6 * k, y - 38 * k); ctx.lineTo(x + 16 * k, y - 32 * k); ctx.lineTo(x + 6 * k, y - 14 * k); ctx.lineTo(x - 14 * k, y - 8 * k); ctx.closePath(); ctx.fill();
     ctx.fillStyle = '#a9aeb6'; ctx.beginPath(); ctx.moveTo(x - 6 * k, y - 38 * k); ctx.lineTo(x + 16 * k, y - 32 * k); ctx.lineTo(x + 4 * k, y - 26 * k); ctx.closePath(); ctx.fill();
@@ -1702,6 +1717,7 @@ function drawNode(n, t) {
     ctx.fillStyle = hexA('#dff4ff', g); for (const [vx, vy] of [[-14, -18], [-10, -14], [8, -22], [12, -18], [16, -8], [-2, -6]]) ctx.fillRect(x + vx * k - 1.5, y + vy * k - 1.5, 3, 3);
     ctx.fillStyle = '#4a4d53'; ellipse(x + 20, y + 6, 8, 5); ctx.fill(); ctx.fillStyle = '#7a7f87'; ellipse(x + 20, y + 4, 6, 3.5); ctx.fill();
   }
+  if (n.pop) ctx.restore();
 }
 // ── Ouvrages ──
 function drawWallPart(p, t) {
@@ -1832,11 +1848,11 @@ function updateTutorial(hint) {
   const touch = lastPointer !== 'mouse';
   let step = '';
   if (!G.started) step = 'move';
-  else if (G.stats.built === 0 && G.t < 120) step = G.stats.harvested < 4 ? 'harvest' : canAfford('palissade') ? 'build' : '';
+  else if (G.stats.built === 0 && G.t < 120) step = G.stats.harvested < 4 ? 'loot' : canAfford('palissade') ? 'build' : '';
   if (hint.dataset.step === step) return;
   hint.dataset.step = step; hint.hidden = !step;
   if (step === 'move') hint.innerHTML = touch ? '<span>Pose le doigt et <b>glisse</b> pour te déplacer.</span><span>Tes armes tirent toutes seules.</span>' : '<span>Déplace-toi avec <b>ZQSD</b>, <b>WASD</b> ou les <b>flèches</b>.</span><span>Tes armes tirent toutes seules.</span>';
-  else if (step === 'harvest') hint.innerHTML = '<span>Va dans le cercle d’un <b>bosquet</b> 🪵 ou d’un <b>rocher</b> 🪨.</span><span>Reste <b>immobile</b> pour récolter vite.</span>';
+  else if (step === 'loot') hint.innerHTML = '<span>Ramasse le <b>bois</b> 🪵 et la <b>pierre</b> 🪨 lâchés par la horde.</span><span>Tes armes brisent aussi les <b>arbres et rochers</b> au halo doré.</span>';
   else if (step === 'build') hint.innerHTML = `<span>Pose une <b>palissade</b> 🧱 ${touch ? '(bouton en bas)' : '(touche <b>1</b>)'} en fuyant.</span><span>La horde bute dessus, toi tu passes.</span>`;
 }
 function renderSlots() {
@@ -1885,7 +1901,7 @@ function endRun(win) {
   $('#end-box').className = 'end ' + (win ? 'win' : 'lose');
   $('#end-eyebrow').textContent = `${G.H.name}, ${G.H.title.toLowerCase()}`;
   $('#end-title').textContent = win ? 'Le Néant recule !' : `${G.H.name} est tombé`;
-  const stats = [['Survie', clock(G.t)], ['Ennemis vaincus', fmt(G.kills)], ['Niveau', G.level], ['Meilleur combo', '×' + fmt(G.combo.max)], ['Évolutions', G.stats.evos], ['Récolte', fmt(G.stats.harvested)], ['Ouvrages', G.stats.built], ['Ultimes', G.ult.uses]];
+  const stats = [['Survie', clock(G.t)], ['Ennemis vaincus', fmt(G.kills)], ['Niveau', G.level], ['Meilleur combo', '×' + fmt(G.combo.max)], ['Évolutions', G.stats.evos], ['Butin', fmt(G.stats.harvested)], ['Ouvrages', G.stats.built], ['Ultimes', G.ult.uses]];
   $('#end-stats').innerHTML = stats.map(([k, v]) => `<div><b>${v}</b><span>${k}</span></div>`).join('');
   const maxD = Math.max(1, ...G.weapons.map(w => w.dmg));
   $('#end-weapons').innerHTML = G.weapons.slice().sort((a, b) => b.dmg - a.dmg).map(w => { const W = WEAPONS[w.id]; return `<div class="wrow"><span>${w.evo ? W.evo.icon : W.icon}</span><span>${w.evo ? W.evo.name : W.name} · niv. ${w.lvl}</span><span>${fmt(w.dmg)} dégâts</span><span class="bar"><i style="width:${(100 * w.dmg / maxD).toFixed(0)}%"></i></span></div>`; }).join('');
@@ -1900,7 +1916,7 @@ function buildMenu() {
       <canvas data-hero="${F.id}" aria-hidden="true"></canvas><h3>${H.name}<small>${F.name} · ${H.title}</small></h3>
       <p class="pitch">${fr(F.pitch)}</p>
       <div class="stats"><span>PV <b>${H.hp}</b></span><span>Vitesse <b>${H.speed}</b></span><span>Armure <b>${H.armor}</b></span></div>
-      <ul class="kit"><li><em>Récolte</em>${fr(H.perk)}</li><li><em>Départ</em>${W.icon} ${W.name}</li><li><em>Armes</em>${kit}</li><li><em>Ultime</em>${U.icon} ${U.name}</li></ul>
+      <ul class="kit"><li><em>Butin</em>${fr(H.perk)}</li><li><em>Départ</em>${W.icon} ${W.name}</li><li><em>Armes</em>${kit}</li><li><em>Ultime</em>${U.icon} ${U.name}</li></ul>
       <p class="best">${b ? `Record : ${b >= 9999 ? 'victoire' : clock(b)}` : 'Aucune run pour l’instant'}</p>
     </button>`;
   }).join('');
