@@ -1,17 +1,21 @@
 # Runes & Remparts
 
-Prototype jouable d’un tower defense rogue-like en heroic fantasy, pensé pour mobile (paysage), en solo et bientôt en coop.
+Prototype jouable d’un jeu de siège rogue-like en heroic fantasy, pensé pour mobile (paysage), en solo et bientôt en coop.
 Ce dépôt sert de terrain d’essai avant le passage sur Unity.
 
 **Jouer :** https://gajacgabriel.github.io/runes-remparts/
 
-## Le concept
+## Le concept (v0.3 : la citadelle assiégée)
 
-- **3 factions asymétriques**, à la StarCraft : Orcs (bon marché, nombreux), Nains (économie et ingénierie), Elfes (chers, précis, dépendants du cristal).
-- **Économie à deux ressources** : or et cristal, exploités sur des gisements dont certains sont exposés aux pillards.
-- **Rogue-like** : chaque niveau gagné propose 3 cartes d’amélioration (puissance, effets, économie, héroïque, faction), avec des synergies.
-- **Héros et sorts** : un héros déplaçable par faction et deux sorts à recharge pour agir pendant les vagues.
-- 20 vagues, 4 boss, environ 12 minutes par run.
+- **Siège de 10 minutes** : la horde sort de la forêt **de tous les côtés** et fonce sur la citadelle, au centre de la carte. Le flux est continu, avec une **marée** chaque minute, une **élite** chaque minute et **4 boss** (2:30, 5:00, 7:30, 10:00). Vaincre le boss final gagne la run.
+- **Des centaines d’ennemis fragiles** (jusqu’à 400 à l’écran) et des chiffres de dégâts : la sensation survivor.
+- **La citadelle tire elle-même** à 360° ; les tours se construisent sur **trois anneaux** d’emplacements autour d’elle.
+- **3 factions asymétriques**, à la StarCraft : Orcs (bon marché, nombreux), Nains (artillerie, économie), Elfes (chers, précis, dépendants du cristal).
+- **Économie à deux ressources** : or (kills, mines) et cristal (élites, boss, extracteurs exposés aux pillards).
+- **Rogue-like** : chaque niveau propose 3 cartes d’amélioration, avec synergies.
+- **Évolutions de tours** : une tour au niveau max + une carte précise devient légendaire (Tempête de haches, Baliste runique, Prisme stellaire…).
+- **Ultime de faction** rechargé par les kills : WAAAGH !, Barrage runique, Nuit des étoiles.
+- **Héros et sorts** pour agir pendant le siège.
 
 ## Installer comme une appli (Android)
 
@@ -25,11 +29,12 @@ Tout tient dans `index.html`. Les réglages de design sont regroupés en haut du
 
 | Bloc | Contenu |
 |---|---|
-| `BAL` | Vies, pauses entre vagues, courbe de PV, XP, combo, héros |
+| `BAL` | Vies, coûts d’amélioration, XP, combo, héros, ultime |
+| `HORDE` | Débit d’ennemis, marées, courbe de PV, élites, boss |
 | `FACTIONS` | Ressources de départ, revenu passif, niveau max des tours |
-| `HEROES`, `SPELL1`, `SPELL2` | Héros et sorts de chaque faction |
-| `BUILD` | Tours, casernes et mines (coûts, dégâts, portée…) |
-| `ENEMIES`, `WAVES` | Bestiaire et composition des 20 vagues |
+| `HEROES`, `SPELL1`, `SPELL2`, `ULTS` | Héros, sorts et ultimes de chaque faction |
+| `BUILD`, `CIT_DEF`, `EVOS` | Tours, casernes, mines, citadelle et évolutions |
+| `ENEMIES` | Bestiaire |
 | `CARDS` | Les cartes d’amélioration et leurs effets |
 
-En jeu, le menu pause contient des **outils de test** (or, niveau, vague suivante, vies infinies), et la console expose `window.RR` pour simuler des runs.
+En jeu, le menu pause contient des **outils de test** (or, niveau, +1 minute, recharge des sorts et de l’ultime, vies infinies), et la console expose `window.RR` pour simuler des runs.
