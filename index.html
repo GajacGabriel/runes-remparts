@@ -1826,7 +1826,7 @@ const THEMES = {
   forest: { base: '#3b4a2f', tones: ['#2e3d26', '#46593a', '#516440', '#38482c'], dirt: '#6a5638', dirtD: '#4f3f2a', blades: ['#5f7d43', '#73944d', '#4b6637', '#88a85a'],
     flowers: ['#f0e2b0', '#e2a6cf', '#f4e27a', '#ffffff', '#a8c8ff'], pebble: '#8a8474', ambient: '#a3a9c2', fog: 'rgba(200,210,235,', mote: '#ffcf8a' },
   void: { base: '#2c2735', tones: ['#231f2b', '#353042', '#3e3550', '#2a2533'], dirt: '#43384f', dirtD: '#2f2739', blades: ['#5a4a6c', '#6d5c84', '#483c58', '#7d6c98'],
-    flowers: ['#c58cff', '#9fd8ff', '#e0c8ff'], pebble: '#625a70', vein: '#b47aff', ambient: '#8c82a8', fog: 'rgba(190,160,230,', mote: '#c9a0ff' },
+    flowers: ['#c58cff', '#9fd8ff', '#e0c8ff'], pebble: '#625a70', vein: '#b47aff', ambient: '#9a90b8', fog: 'rgba(190,160,230,', mote: '#c9a0ff' },
 };
 // Grands traits du monde : taches de couleur, plaques de terre, sentiers sinueux (communs aux morceaux de sol).
 const WORLD = (() => {
@@ -2060,6 +2060,9 @@ function render() {
     const c = groundChunk(gx, gy, G.M.ground);
     if (c) ctx.drawImage(c, gx * CH, gy * CH, CH + .6, CH + .6); else { ctx.fillStyle = TH.base; ctx.fillRect(gx * CH, gy * CH, CH, CH); }
   }
+  // Pré-chargement : on prépare les morceaux de sol juste au-delà de la vue (1 par image).
+  chunkBudget = Math.max(chunkBudget, 1);
+  for (let gx = Math.floor((v.x0 - CH) / CH); gx <= Math.floor((v.x1 + CH) / CH) && chunkBudget > 0; gx++) for (let gy = Math.floor((v.y0 - CH) / CH); gy <= Math.floor((v.y1 + CH) / CH) && chunkBudget > 0; gy++) if (gx >= 0 && gy >= 0 && gx * CH < WW && gy * CH < WH) groundChunk(gx, gy, G.M.ground);
   for (const d of G.decals) drawDecal(d);
   for (const c of G.corpses) if (inV(c.x, c.y, 40)) drawCorpse(c, t);
   for (const z of G.zones) drawZone(z, t);
