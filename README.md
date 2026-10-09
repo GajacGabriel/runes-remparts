@@ -5,7 +5,7 @@ Ce dépôt sert de terrain d’essai pour trouver le fun avant le passage sur Un
 
 **Jouer :** https://gajacgabriel.github.io/runes-remparts/
 
-## Le concept (v0.7 : champions, sorts et missions)
+## Le concept (v0.8 : champions, sorts et missions)
 
 - **Contrôles** : ZQSD / WASD / flèches pour bouger, **souris pour viser**. L’attaque du champion tire en continu vers le curseur (C bascule en visée automatique).
 - **Sorts** : **clic droit** (ou E) et **Espace**, chacun avec sa recharge. **Ultime** : **R**, rechargé par les kills.
@@ -13,10 +13,11 @@ Ce dépôt sert de terrain d’essai pour trouver le fun avant le passage sur Un
 
 | Champion | Attaque (visée) | Clic droit | Espace | Ultime |
 |---|---|---|---|---|
-| **Grukk** (orc, mêlée) | Lancer de haches | **Charge** vers le curseur, renverse tout | **Tourbillon** qui aspire et broie | WAAAGH ! |
-| **Durgan** (nain, contrôle) | Marteau qui revient | **Tourelle runique** posée au curseur | **Séisme** qui étourdit | Barrage runique au curseur |
-| **Lyriel** (elfe, distance) | Arc perçant | **Roulade** d’esquive | **Volée** de flèches au curseur | Nuit des étoiles |
+| **Grukk** (orc, mêlée) | Lancer de haches | **Charge** : fonce, renverse tout, retombe en onde de choc (un kill rembourse 60 % de la recharge) | **Tourbillon** : avance en aspirant la horde, finit en éruption | WAAAGH ! |
+| **Durgan** (nain, contrôle) | Marteau qui revient | **Tourelle runique** lancée en cloche : impact étourdissant, tir rapide, explosion finale | **Séisme** : une faille de pics de roche court vers le curseur et explose | Barrage runique au curseur |
+| **Lyriel** (elfe, distance) | Arc perçant | **Roulade** d’esquive : les 2 flèches suivantes sont chargées (énormes, perforantes) | **Volée** au curseur : les ennemis touchés sont marqués | Nuit des étoiles |
 
+- **Synergies** : un ennemi étourdi subit +30 % de dégâts, un ennemi marqué +25 %. Enchaîner ses sorts paie.
 - **Build en partie** : chaque niveau propose 3 cartes : armes automatiques, passifs, et **talents** qui transforment les sorts (par exemple, une Charge qui laisse une traînée de braises, des Tourelles jumelles, une Volée de givre). Les évolutions d’armes restent : arme au niveau 5 + passif indiqué + 1 cristal.
 - **Missions** : chaque carte enchaîne 5 objectifs, puis un boss final. Les flèches dorées guident vers l’objectif.
   - **Détruire les nids** qui crachent la horde.
@@ -27,6 +28,7 @@ Ce dépôt sert de terrain d’essai pour trouver le fun avant le passage sur Un
 - **Deux missions** : *Les Marches cendrées* (boss : Chef de guerre cendré) et *Le Col du Néant* (boss : Seigneur du Néant), en trois difficultés : Normal, Héroïque, Légendaire.
 - **Le camp, entre les missions** : chaque mission rapporte des **runes**, même en cas de défaite. On les dépense en améliorations permanentes (PV, dégâts, vitesse, recharge des sorts, XP, aimant, or de départ). Des **défis** débloquent des armes, une mission, un passif et les difficultés supérieures.
 - La progression est sauvegardée dans le navigateur.
+- **Rendu** : sol peint par morceaux (sentiers, fleurs, fissures du Néant), forêts, ruines et braseros, cristaux luminescents, éclairage dynamique (pénombre, lumière des sorts, projectiles et explosions), halos, fumée, brume, corps qui tombent, images rémanentes.
 
 ## Itérer sur l’équilibrage
 
@@ -50,3 +52,4 @@ Le menu pause contient des **outils de test** (+1 niveau, +1 minute, or, cristal
 - v0.4 : pivot vers un survivor, après des playtests où l’on « cliquait sans réfléchir ».
 - v0.5 à v0.6 : récolte, butin et remparts, en portrait mobile. Pas concluant : « un survivor comme les autres ».
 - v0.7 : virage PC à la Swarm : visée à la souris, sorts actifs et talents, missions à objectifs, camp de progression.
+- v0.8 : grosse passe graphique (éclairage dynamique, décors, effets) et sorts plus amusants (charges, onde de choc, faille, flèches chargées, marques et synergies).
