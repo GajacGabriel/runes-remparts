@@ -274,6 +274,7 @@ kbd { font-family: var(--f-body); font-size: .75em; font-weight: 800; padding: 0
     <div id="clock"><b id="h-time">00:00</b><small id="h-sub"></small></div>
     <div id="res">
       <span class="pill" title="Ennemis vaincus"><span class="skull">💀</span><span id="h-kills">0</span></span>
+      <span class="pill" id="p-army" title="Armée : soldats ralliés / effectif max"><span>⚔️</span><span id="h-army">0</span></span>
       <span class="pill" title="Or"><i class="coin"></i><span id="h-or">0</span></span>
       <span class="pill" title="Cristal (sert aux évolutions)"><i class="gem"></i><span id="h-cr">0</span></span>
       <button id="h-sound" class="hbtn" type="button" title="Son (M)" aria-label="Couper le son">🔊</button>
@@ -294,8 +295,8 @@ kbd { font-family: var(--f-body); font-size: .75em; font-weight: 800; padding: 0
   <section class="screen" id="scr-menu">
     <div class="menu">
       <div class="brand">
-        <div><p class="eyebrow">Prototype jouable · v0.8</p><h1>Runes <span>&amp;</span> Remparts</h1></div>
-        <p class="tag">Choisis ton champion, vise à la souris, enchaîne tes sorts. Remplis les objectifs de la mission, abats le boss, et reviens au camp plus fort.</p>
+        <div><p class="eyebrow">Prototype jouable · v0.9</p><h1>Runes <span>&amp;</span> Remparts</h1></div>
+        <p class="tag">Pars seul, retourne la horde. Chaque ennemi vaincu peut grossir ton armée : libère des prisonniers, prends des forts, et lance ta horde contre la leur.</p>
       </div>
       <div class="facs" id="facs"></div>
       <div class="row2">
@@ -314,6 +315,7 @@ kbd { font-family: var(--f-body); font-size: .75em; font-weight: 800; padding: 0
         <ul>
           <li><b>Déplacement</b> : <kbd>ZQSD</kbd> / <kbd>WASD</kbd> / flèches. <b>Visée</b> : la souris. Ton attaque tire en continu vers le curseur (<kbd>C</kbd> passe en visée automatique).</li>
           <li><b>Sorts</b> : <kbd>Clic droit</kbd> et <kbd>Espace</kbd>, chacun avec sa recharge. <b>Ultime</b> : <kbd>R</kbd>, il se charge en tuant.</li>
+          <li><b>Ton armée</b> : les ennemis vaincus peuvent rejoindre ton camp (anneau vert). <kbd>Clic gauche</kbd> (ou <kbd>F</kbd>) : assaut sur le point visé. <kbd>Maj</kbd> : ralliement autour de toi. Libère des prisonniers et prends des forts pour la grossir.</li>
           <li>Chaque niveau propose 3 cartes : armes automatiques, passifs, et <b>talents</b> qui transforment tes sorts.</li>
           <li><b>Évolution</b> : arme au niveau 5 + passif indiqué + 1 cristal (élites, boss).</li>
           <li><b>Mission</b> : suis les objectifs (flèches dorées), puis abats le boss final. Esquive les cercles et lignes rouges.</li>
@@ -434,8 +436,8 @@ const BAL = {
   ultBase: 120, ultStep: 50,
   maxWeapons: 6, maxPassives: 6,
   spellScale: L => 1 + .15 * (L - 1),              // les sorts suivent le niveau du héros
-  firstObjective: 20, objectiveGap: 35,            // secondes avant le 1er objectif, puis de horde libre entre deux objectifs
-  bossHp: m => 1 + .12 * m,                        // les boss grossissent avec la durée de la mission
+  firstObjective: 20, objectiveGap: 45,            // secondes avant le 1er objectif, puis de horde libre entre deux objectifs
+  bossHp: m => (1 + .12 * m) * 5,                        // les boss grossissent avec la durée de la mission
   runes: { objective: 15, midBoss: 20, boss: 40, perKills: 150 },
 };
 
@@ -479,8 +481,8 @@ const SPELLS = {
 // ═════════════════════════ Missions ═════════════════════════
 // Une mission = des objectifs dans l’ordre, un boss intermédiaire, puis le boss final.
 const MAPS = {
-  cendres: { name: 'Les Marches cendrées', desc: 'Forêt envahie par les cendreux : nids, rune à tenir, porteur en fuite.', ground: 'forest', objectives: ['nids', 'zone', 'chasse', 'nids', 'zone'], mid: { after: 2, type: 'boss2' }, boss: 'boss1' },
-  neant: { name: 'Le Col du Néant', desc: 'Escorte la caravane à travers le col corrompu, jusqu’au Seigneur du Néant.', ground: 'void', objectives: ['escorte', 'nids', 'zone', 'chasse', 'escorte'], mid: { after: 2, type: 'boss3' }, boss: 'boss4' },
+  cendres: { name: 'Les Marches cendrées', desc: 'Libère des prisonniers, prends un fort cendreux, et lève ta horde contre le Chef de guerre.', ground: 'forest', objectives: ['prisonniers', 'nids', 'fort', 'zone', 'chasse'], mid: { after: 1, type: 'boss2' }, boss: 'boss1' },
+  neant: { name: 'Le Col du Néant', desc: 'Escorte la caravane à travers le col corrompu, jusqu’au Seigneur du Néant.', ground: 'void', objectives: ['escorte', 'prisonniers', 'fort', 'nids', 'zone'], mid: { after: 1, type: 'boss3' }, boss: 'boss4' },
 };
 const DIFFS = {
   normal: { name: 'Normal', hp: 1, dmg: 1, runes: 1 },
@@ -492,6 +494,32 @@ const OBJ = {
   zone: { name: 'Tiens la rune', desc: 'Reste dans le cercle de la rune pour la charger.' },
   chasse: { name: 'Traque le porteur', desc: 'Un porteur de runes s’enfuit avec son butin. Rattrape-le.' },
   escorte: { name: 'Escorte la caravane', desc: 'Elle n’avance que si tu restes près d’elle. Protège-la.' },
+  prisonniers: { name: 'Libère les prisonniers', desc: 'Brise la cage gardée : les miliciens rejoindront ton armée.' },
+  fort: { name: 'Prends le fort', desc: 'Abats le capitaine : toute sa garnison passera dans ton camp.' },
+};
+
+// ═════════════════════════ Armée : réglages ═════════════════════════
+// Chaque faction recrute à sa manière : soumission (orcs), golems forgés (nains), esprits envoûtés (elfes).
+const ARMY = {
+  orcs: { mode: 'soumission', chance: .24, name: 'Soumission', desc: 'Un quart des ennemis achevés se soumettent et rejoignent ta horde.' },
+  nains: { mode: 'golem', every: 9, name: 'Forge de golems', desc: 'Tous les 9 kills, un golem runique se dresse : rare, mais increvable.' },
+  elfes: { mode: 'envoutement', chance: .2, hp: .85, spd: 1.35, spirit: true, name: 'Envoûtement', desc: 'Les ennemis envoûtés reviennent en esprits : rapides mais fragiles.' },
+  cap: 50, aggro: 170, leash: 380, orderT: 6, rallyCd: 8,
+  hpMul: 2.6, dmg: m => 3 + 1.3 * m,
+  color: '#6fe08a',
+};
+// Troupes qui n’existent que dans ton camp
+const ALLY_T = {
+  golem: { name: 'Golem runique', hp: 110, spd: 58, dmg: 16, r: 14, armor: 3 },
+  milicien: { name: 'Milicien', hp: 34, spd: 72, dmg: 8, r: 10 },
+};
+// Cartes d’armée (hors emplacements de passifs)
+const ARMY_UP = {
+  effectif: { name: 'Rangs serrés', icon: '🛡️', max: 5, desc: '+20 places dans l’armée.' },
+  ferveur: { name: 'Ferveur', icon: '🔥', max: 5, desc: 'Les ralliements sont plus fréquents (golems plus vite pour les nains).' },
+  banniere: { name: 'Bannière de guerre', icon: '🚩', max: 5, desc: '+25 % de dégâts pour l’armée.' },
+  veterans: { name: 'Vétérans', icon: '⚔️', max: 5, desc: '+25 % de PV pour les nouvelles recrues.' },
+  tambours: { name: 'Tambours de guerre', icon: '🥁', max: 3, desc: 'Armée 12 % plus rapide, frappe 15 % plus vite.' },
 };
 
 // ═════════════════════════ Camp : progression entre les parties ═════════════════════════
@@ -586,6 +614,7 @@ const ENEMIES = {
   boss4: { name: 'Seigneur du Néant', boss: true, hp: 10000, spd: 46, dmg: 40, xp: 150, r: 24, col: '#4a1d66', ai: 'void' },
   // Ennemis d’objectif : le nid ne bouge pas, le porteur fuit le héros.
   nid: { name: 'Nid de cendres', hp: 650, spd: 0, dmg: 6, xp: 20, r: 26, col: '#6a4a6a', static: true },
+  cage: { name: 'Cage de prisonniers', hp: 900, spd: 0, dmg: 0, xp: 10, r: 30, col: '#8a5a2e', static: true, cage: true },
   porteur: { name: 'Porteur de runes', hp: 160, spd: 128, dmg: 6, xp: 40, r: 11, col: '#c9a24a', flee: true },
 };
 
@@ -749,6 +778,8 @@ const LOOKS = {
   grukk: { px: 2.6, bulky: true, skin: SK.orc, armor: '#5a2a18', arms: SK.orc, pants: '#3a2414', boots: '#1e140c', trim: '#d4683f', helm: '#4a3a30', horns: '#e6dcc0', tusks: true, weapon: 'bigaxe', cape: '#d4683f', eye: '#ffcf3a' },
   durgan: { px: 2.6, short: true, skin: SK.dwarf, armor: '#2f5f8a', pants: '#4a3a2a', boots: '#2a2018', trim: '#e2b443', helm: '#e2b443', wings: true, beard: '#e8e6e0', weapon: 'hammer', shield: '#6ea6d6', cape: '#2f5f8a', eye: '#2a1a10' },
   lyriel: { px: 2.6, tall: true, skin: SK.elf, armor: '#3e6a4a', pants: '#2e4a34', boots: '#2a2a20', trim: '#f0e0a0', hood: '#2e5a3a', ears: true, weapon: 'bow', cape: '#4f8a5a', eye: '#2a4a2a' },
+  milicien: { px: 2, skin: SK.human, armor: '#8a929c', pants: '#4a3a2a', boots: '#2a2018', trim: '#e2b443', helm: '#a9b2bc', weapon: 'sword', shield: '#3a6ab0', eye: '#1a1010' },
+  golem: { px: 2.7, bulky: true, skin: '#7a7670', armor: '#5d5a54', arms: '#7a7670', pants: '#4a4742', boots: '#3a3834', trim: '#7fe3f3', cracks: true, weapon: 'none', eye: '#7fe3f3' },
   coureur: { px: 2, kind: 'hound' },
   harpie: { px: 2, kind: 'harpy' },
 };
@@ -817,6 +848,7 @@ function newRun(fac, map = selMap, diff = selDiff) {
     level: 1, xp: 0, pendingLv: 0, gold: 25 * (C.pecule || 0), cr: 0, kills: 0, rerollsUsed: 0, offer: null,
     spells: H.spells.map(id => ({ id, t: 0, tal: {}, ammo: 1 })), spellW: { id: 'sorts', dmg: 0, kills: 0 }, dash: null, spin: null, timers: [], aimAt: null,
     arcs: [], spikes: [], ghosts: [], corpses: [], flashes: [], kick: { x: 0, y: 0 }, empower: 0,
+    allies: [], army: { ups: {}, gauge: 0, recruits: 0, lost: 0 }, armyW: { id: 'armee', dmg: 0, kills: 0 }, order: null, rallyT: 0, rallyCd: 0,
     mis: { i: 0, phase: 'wait', t: BAL.firstObjective, obj: null, done: 0, runes: 0 }, cart: null,
     enemies: [], projs: [], eprojs: [], turrets: [], booms: [], mines: [], zones: [], meteors: [], drops: [], tele: [],
     fx: [], parts: [], texts: [], decals: [],
@@ -992,14 +1024,19 @@ function updateEnemies(dt) {
     if (e.T.regen && e.hp < e.maxHp) e.hp = Math.min(e.maxHp, e.hp + e.maxHp * e.T.regen * dt);
     // Les ennemis trop loin réapparaissent devant le héros (la pression ne retombe jamais).
     if (e.T.static) { updateNest(e, dt); continue; }
-    if (!e.boss && !e.T.flee && d2(e.x, e.y, h.x, h.y) > far * far) { const p = spawnPoint(); e.x = p.x; e.y = p.y; }
+    if (!e.boss && !e.T.flee && !e.guard && d2(e.x, e.y, h.x, h.y) > far * far) { const p = spawnPoint(); e.x = p.x; e.y = p.y; }
     let spd = e.speed * (e.slowT > 0 ? 1 - e.slowP : 1) * (G.starfall > 0 ? .5 : 1);
     if (e.slowT > 0) e.slowT -= dt;
     if (e.mark > 0) e.mark -= dt;
     let mx = e.kx * dt, my = e.ky * dt;
     e.kx *= Math.pow(.02, dt); e.ky *= Math.pow(.02, dt);
     if (e.stun > 0) { e.stun -= dt; spd = 0; }
-    const tg = e.tgtCart && G.cart ? G.cart : h, dx = tg.x - e.x, dy = tg.y - e.y, dd = Math.hypot(dx, dy) || 1, hd = tg === h ? dd : dist(e.x, e.y, h.x, h.y);
+    // Cible : le héros (ou la caravane), sauf si un soldat de ton armée est plus proche.
+    let tg = e.tgtCart && G.cart ? G.cart : h;
+    if (G.allies.length && !e.T.flee) { const a = nearestAlly(e.x, e.y, 140); if (a && d2(a.x, a.y, e.x, e.y) < d2(tg.x, tg.y, e.x, e.y)) tg = a; }
+    // Gardes (cage, fort) : ils ne quittent pas leur poste pour te poursuivre.
+    if (e.guard && d2(tg.x, tg.y, e.guard.x, e.guard.y) > 320 * 320) { tg = e.post || (e.post = { x: e.guard.x + rand(-90, 90), y: e.guard.y + rand(-70, 70) }); if (d2(tg.x, tg.y, e.x, e.y) < 100) spd = 0; }
+    const dx = tg.x - e.x, dy = tg.y - e.y, dd = Math.hypot(dx, dy) || 1, hd = tg === h ? dd : dist(e.x, e.y, h.x, h.y);
     if (e.boss) { const r = bossAI(e, dt, dx, dy, dd); if (r) { mx += r.x; my += r.y; spd = 0; } }
     if (e.T.ranged && !e.boss && dd < e.T.ranged.range) {
       e.shotT -= dt;
@@ -1019,11 +1056,13 @@ function updateEnemies(dt) {
     e.moving = Math.abs(mx) + Math.abs(my) > .05;
     if (hd < e.r + BAL.heroR && e.atkCd <= 0) { e.atkCd = .8; e.atk = .22; hurtHero(e.T.dmg * BAL.dmg(G.m) * (e.elite ? 1.6 : 1) * (e.charging ? 1.6 : 1)); }
     else if (tg === G.cart && dd < e.r + 26 && e.atkCd <= 0) { e.atkCd = .8; e.atk = .22; hitCart(e.T.dmg * BAL.dmg(G.m) * G.D.dmg); }
+    else if (tg.ally && dd < e.r + tg.r + 3 && e.atkCd <= 0) { e.atkCd = .8; e.atk = .22; hitAlly(tg, e.T.dmg * BAL.dmg(G.m) * G.D.dmg * (e.elite ? 1.6 : 1) * (e.boss ? 2 : 1)); }
     if (e.atk) e.atk = Math.max(0, e.atk - dt);
   }
 }
 // Nid : immobile, il crache des cendreux tant que le héros est dans les parages.
 function updateNest(e, dt) {
+  if (e.T.cage) return;
   const h = G.hero;
   e.aiT -= dt;
   if (e.aiT <= 0 && d2(e.x, e.y, h.x, h.y) < 1100 * 1100) {
@@ -1051,11 +1090,11 @@ function bossAI(e, dt, dx, dy, dd) {
   if (ai === 'charge') {
     if (e.state === 'chase') { e.aiT -= dt; if (e.aiT <= 0 && dd < 520) { e.state = 'wind'; e.aiT = .85; e.cdx = dx / dd; e.cdy = dy / dd; G.tele.push({ k: 'line', e, x: e.x, y: e.y, dx: e.cdx, dy: e.cdy, len: 400, w: e.r * 2.2, t: 0, T: .85 }); SFX.play('warn'); } return null; }
     if (e.state === 'wind') { e.aiT -= dt; if (e.aiT <= 0) { e.state = 'dash'; e.aiT = .6; e.charging = true; shake(3); } return { x: 0, y: 0 }; }
-    if (e.state === 'dash') { e.aiT -= dt; if (e.aiT <= 0) { e.state = 'chase'; e.aiT = rand(3.5, 5); e.charging = false; } return { x: e.cdx * 640 * dt, y: e.cdy * 640 * dt }; }
+    if (e.state === 'dash') { for (const a of G.allies) if (d2(e.x, e.y, a.x, a.y) < (e.r + a.r + 6) ** 2) hitAlly(a, e.T.dmg * 2 * BAL.dmg(G.m) * dt * 10); e.aiT -= dt; if (e.aiT <= 0) { e.state = 'chase'; e.aiT = rand(3.5, 5); e.charging = false; } return { x: e.cdx * 640 * dt, y: e.cdy * 640 * dt }; }
   }
   if (ai === 'slam') {
     if (e.state === 'chase') { e.aiT -= dt; if (e.aiT <= 0 && dd < 360) { e.state = 'wind'; e.aiT = 1.1; G.tele.push({ k: 'circle', x: e.x, y: e.y, r: 170, t: 0, T: 1.1, e }); SFX.play('warn'); } return null; }
-    if (e.state === 'wind') { e.aiT -= dt; if (e.aiT <= 0) { e.state = 'chase'; e.aiT = rand(4.5, 6); boom(e.x, e.y, 170, '#ff8a3a'); shake(10); SFX.play('boom'); if (d2(e.x, e.y, G.hero.x, G.hero.y) < 170 * 170) hurtHero(e.T.dmg * 1.6); } return { x: 0, y: 0 }; }
+    if (e.state === 'wind') { e.aiT -= dt; if (e.aiT <= 0) { e.state = 'chase'; e.aiT = rand(4.5, 6); boom(e.x, e.y, 170, '#ff8a3a'); shake(10); SFX.play('boom'); if (d2(e.x, e.y, G.hero.x, G.hero.y) < 170 * 170) hurtHero(e.T.dmg * 1.6); for (const a of G.allies) if (d2(e.x, e.y, a.x, a.y) < 170 * 170) hitAlly(a, e.T.dmg * 4 * BAL.dmg(G.m)); } return { x: 0, y: 0 }; }
   }
   if (ai === 'void') {
     e.aiT -= dt;
@@ -1074,6 +1113,7 @@ function updateEProjs(dt) {
   for (const p of G.eprojs) {
     p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
     if (d2(p.x, p.y, h.x, h.y - 14) < (p.r + BAL.heroR) ** 2) { hurtHero(p.dmg); p.life = 0; puff(p.x, p.y, p.kind === 'void' ? '#c58cff' : '#ff8a3a', 6); }
+    else if (G.allies.length) { const a = nearestAlly(p.x, p.y + 14, p.r + 14); if (a) { hitAlly(a, p.dmg * G.D.dmg); p.life = 0; puff(p.x, p.y, p.kind === 'void' ? '#c58cff' : '#ff8a3a', 4); } }
   }
   G.eprojs = G.eprojs.filter(p => p.life > 0);
 }
@@ -1134,8 +1174,13 @@ function killEnemy(e, w) {
   G.ult.v = Math.min(G.ult.need, G.ult.v + (e.boss ? 60 : e.elite ? 15 : 1));
   const c = G.combo; c.n = c.t > 0 ? c.n + 1 : 1; c.t = 1.8; c.max = Math.max(c.max, c.n);
   puff(e.x, e.y - (e.fly ? 30 : 12), T.col, e.boss ? 50 : e.elite ? 18 : 6);
-  // Le corps bascule puis s’efface (rendu du sol).
-  if (!T.static) { G.corpses.push({ key: e.type, x: e.x, y: e.y, face: e.face, s: e.scale, fly: e.fly, t: 0, T: e.boss ? 4 : 1.6, dir: Math.sign(e.x - G.hero.x) || 1 }); if (G.corpses.length > 140) G.corpses.shift(); }
+  // Ralliement : l’ennemi se relève dans ton camp (sinon, le corps bascule puis s’efface).
+  const turned = !G.deadT && tryConvert(e);
+  if (!T.static && !turned) { G.corpses.push({ key: e.type, x: e.x, y: e.y, face: e.face, s: e.scale, fly: e.fly, t: 0, T: e.boss ? 4 : 1.6, dir: Math.sign(e.x - G.hero.x) || 1 }); if (G.corpses.length > 140) G.corpses.shift(); }
+  // Cage brisée : les prisonniers rejoignent l’armée.
+  if (T.cage) { for (let i = 0; i < 8; i++) recruit('milicien', e.x + rand(-40, 40), e.y + rand(-20, 30), { force: true }); banner('Prisonniers libérés', '+8 miliciens', 'ult'); }
+  // Capitaine abattu : toute la garnison du fort se rallie.
+  if (e.guardCapt) { let n = 0; for (const o of G.enemies) if (!o.dead && o.garrison) { o.dead = true; recruit(o.type, o.x, o.y, { force: true, elite: o.elite }); n++; } banner('Le fort est tombé', `${n} soldats se rallient`, 'ult'); SFX.play('evolve'); }
   if (!e.fly && (e.elite || e.boss || Math.random() < .25)) { G.decals.push({ x: e.x, y: e.y + 4, t: 0, T: 8, s: e.boss ? 1.8 : e.elite ? 1.3 : .9, flip: Math.random() < .5 }); if (G.decals.length > 120) G.decals.shift(); }
   SFX.play('death');
   if (e.elite) { shake(3); hitstop(.05); ring(e.x, e.y, 60, '#ffd76a', .4); }
@@ -1600,6 +1645,17 @@ function startObjective() {
     Object.assign(o, placeAway(420, 620), { r: 150, need: 30, inside: false });
   } else if (type === 'chasse') {
     const p = placeAway(460, 640); o.target = spawnEnemy('porteur', { ...p, elite: true });
+  } else if (type === 'prisonniers') {
+    // Une cage gardée par une petite troupe et une élite.
+    const p = placeAway(480, 680); o.cage = spawnEnemy('cage', p);
+    for (let k = 0; k < 11; k++) { const g = spawnEnemy(G.m > 2 && k % 3 === 0 ? 'brute' : 'rodeur', { x: p.x + rand(-90, 90), y: p.y + rand(-70, 70) }); g.guard = { x: p.x, y: p.y }; }
+    const el = spawnEnemy('pillard', { x: p.x + 50, y: p.y + 40, elite: true }); el.guard = { x: p.x, y: p.y };
+  } else if (type === 'fort') {
+    // Un fort palissadé : un capitaine et sa garnison qui gardent leur poste.
+    const p = placeAway(520, 700); o.fort = p;
+    const capt = spawnEnemy('brute', { x: p.x, y: p.y, elite: true }); capt.guardCapt = true; capt.guard = p; capt.maxHp = capt.hp = capt.hp * 3; o.capt = capt;
+    const n = 18 + Math.floor(G.m * 2);
+    for (let k = 0; k < n; k++) { const a = k / n * TAU, r = rand(40, 120); const g = spawnEnemy(pick(G.m > 3 ? ['rodeur', 'pillard', 'brute', 'coureur'] : ['rodeur', 'rodeur', 'pillard', 'coureur']), { x: p.x + Math.cos(a) * r, y: p.y + Math.sin(a) * r * .8 }); g.guard = p; g.garrison = true; }
   } else if (type === 'escorte') {
     const h = G.hero, dest = placeAway(1250, 1550);
     G.cart = { x: clamp(h.x + 70, 100, BAL.world.w - 100), y: h.y + 30, hp: 0, maxHp: 0, hurt: 0, quiet: 0, face: 1, ph: 0 };
@@ -1617,6 +1673,8 @@ function updateObjective(o, dt) {
     o.prog = o.inside ? o.prog + dt : Math.max(0, o.prog - .3 * dt);
     o.done = o.prog >= o.need;
   } else if (o.type === 'chasse') { o.prog = o.target.dead ? 1 : 0; o.done = o.target.dead; }
+  else if (o.type === 'prisonniers') { o.prog = o.cage.dead ? 1 : 0; o.done = o.cage.dead; }
+  else if (o.type === 'fort') { o.prog = o.capt.dead ? 1 : 1 - o.capt.hp / o.capt.maxHp; o.done = o.capt.dead; }
   else if (o.type === 'escorte') {
     const c = G.cart; if (!c) return;
     c.hurt = Math.max(0, c.hurt - dt); c.quiet += dt;
@@ -1651,8 +1709,159 @@ function objectiveTargets() {
   if (o.type === 'nids') for (const e of o.list) { if (!e.dead) out.push(e); }
   else if (o.type === 'zone') out.push(o);
   else if (o.type === 'chasse' && !o.target.dead) out.push(o.target);
+  else if (o.type === 'prisonniers' && !o.cage.dead) out.push(o.cage);
+  else if (o.type === 'fort' && !o.capt.dead) out.push(o.capt);
   else if (o.type === 'escorte' && G.cart) out.push(d2(G.hero.x, G.hero.y, G.cart.x, G.cart.y) > 280 * 280 ? G.cart : o.dest);
   return out;
+}
+// ═════════════════════════ Armée : la Horde retournée ═════════════════════════
+// Les ennemis vaincus rejoignent ton camp, chaque faction à sa manière. L’armée suit le héros,
+// attaque tout ce qui approche, et obéit à deux ordres : assaut (clic gauche) et ralliement (Maj).
+function armyCap() { return ARMY.cap + 20 * (G.army.ups.effectif || 0); }
+const armyDmgMul = () => 1 + .25 * (G.army.ups.banniere || 0);
+const armyHpMul = () => 1 + .25 * (G.army.ups.veterans || 0);
+const armySpdMul = () => 1 + .12 * (G.army.ups.tambours || 0);
+function recruit(type, x, y, o = {}) {
+  if (!o.force && G.allies.length >= armyCap()) return null;
+  const F = ARMY[G.fac], T = ENEMIES[type] || ALLY_T[type], spirit = !!F.spirit && !ALLY_T[type] && !o.boss;
+  const scale = o.boss ? 1 : o.elite ? 1.3 : 1;
+  const baseHp = o.boss ? o.hp : (T.hp * (ALLY_T[type] ? 1 + .3 * G.m + .05 * G.m * G.m : BAL.hp(G.m))) * ARMY.hpMul * (o.elite ? 3 : 1) * (F.hp || 1);
+  const a = { ally: true, id: G.nid++, type, T, x, y, hp: baseHp * armyHpMul(), maxHp: baseHp * armyHpMul(), r: T.r * scale, scale, spirit, boss: !!o.boss,
+    baseDmg: T.dmg * ARMY.dmg(G.m) * (o.boss ? 3 : o.elite ? 2 : 1) * (T.armor ? 1.2 : 1), speed: (T.spd || 70) * 1.25 * (F.spd || 1), ranged: !!T.ranged,
+    atkCd: rand(0, .6), atk: 0, face: 1, ph: Math.random() * 6, flash: 0, pop: .45, think: 0, tgt: null, slot: G.army.recruits++ };
+  if (T.fly) a.fly = true;
+  G.allies.push(a);
+  ring(x, y, 36, ARMY.color, .4); sparkle(x, y - 16, ARMY.color, 5);
+  return a;
+}
+// Appelé à chaque kill : l’ennemi rejoint-il l’armée ?
+function tryConvert(e) {
+  if (e.T.static || e.T.flee || e.final || e.guardCapt) return false;
+  const F = ARMY[G.fac], fer = G.army.ups.ferveur || 0;
+  if (e.boss) { // Le boss intermédiaire vaincu devient ton général.
+    recruit(e.type, e.x, e.y, { boss: true, hp: e.maxHp * .5, force: true });
+    banner(`${e.T.name} se rallie`, 'Ton général', 'ult'); SFX.play('evolve');
+    return true;
+  }
+  if (F.mode === 'golem') {
+    G.army.gauge += e.elite ? 4 : 1;
+    const need = Math.max(4, F.every - fer);
+    if (G.army.gauge >= need) { G.army.gauge -= need; if (recruit('golem', e.x, e.y)) { addText(e.x, e.y - 40, 'Golem forgé !', '#7fe3f3', 16, true); SFX.play('slam'); } }
+    return false;
+  }
+  if (e.elite || Math.random() < F.chance + .05 * fer) {
+    const a = recruit(e.type, e.x, e.y, { elite: e.elite });
+    if (a && e.elite) addText(e.x, e.y - 50, 'Ralliée !', ARMY.color, 18, true);
+    return !!a;
+  }
+  return false;
+}
+let AGRID = new Map();
+function agridBuild() {
+  AGRID = new Map();
+  for (const a of G.allies) { if (a.dead) continue; const k = ((a.x / GC) | 0) * 1000 + ((a.y / GC) | 0); let c = AGRID.get(k); if (!c) AGRID.set(k, c = []); c.push(a); }
+}
+function nearestAlly(x, y, r) {
+  let best = null, bd = r * r;
+  const x0 = Math.floor((x - r) / GC), x1 = Math.floor((x + r) / GC), y0 = Math.floor((y - r) / GC), y1 = Math.floor((y + r) / GC);
+  for (let i = x0; i <= x1; i++) for (let j = y0; j <= y1; j++) { const c = AGRID.get(i * 1000 + j); if (!c) continue; for (const a of c) { if (a.dead) continue; const q = d2(x, y, a.x, a.y); if (q < bd) { bd = q; best = a; } } }
+  return best;
+}
+function hitAlly(a, d) {
+  if (a.dead) return;
+  a.hp -= d * (G.rallyT > 0 ? .55 : 1); a.flash = .08;
+  if (a.hp <= 0) {
+    a.dead = true; G.army.lost++;
+    puff(a.x, a.y - 12, ARMY.color, a.boss ? 30 : 6);
+    if (!a.spirit) G.corpses.push({ key: a.type === 'golem' || a.type === 'milicien' ? a.type : a.type, x: a.x, y: a.y, face: a.face, s: a.scale, fly: a.fly, t: 0, T: 1.4, dir: -a.face });
+  }
+}
+// Ordres
+function commandArmy(x, y) {
+  if (!G || !running() || !G.allies.length) return;
+  G.order = { x, y, t: ARMY.orderT }; G.rallyT = 0; G.started = true;
+  ring(x, y, 50, ARMY.color, .5); SFX.play('charge');
+  if (G.allies.length) addText(G.hero.x, G.hero.y - 64, 'À l’assaut !', ARMY.color, 16, true);
+}
+function rallyArmy() {
+  if (!G || !running()) return;
+  if (G.rallyCd > 0) { SFX.play('deny'); return; }
+  G.order = null; G.rallyT = 3; G.rallyCd = ARMY.rallyCd; G.started = true;
+  for (const a of G.allies) a.hp = Math.min(a.maxHp, a.hp + a.maxHp * .2);
+  ring(G.hero.x, G.hero.y, 160, ARMY.color, .6); SFX.play('ready'); addText(G.hero.x, G.hero.y - 64, 'Ralliement !', ARMY.color, 16, true);
+}
+function updateAllies(dt) {
+  const h = G.hero;
+  if (G.order) { G.order.t -= dt; if (G.order.t <= 0) G.order = null; }
+  G.rallyT = Math.max(0, G.rallyT - dt); G.rallyCd = Math.max(0, G.rallyCd - dt);
+  agridBuild();
+  const home = G.order || h, spdK = armySpdMul() * (G.rallyT > 0 ? 1.5 : 1), dmgK = armyDmgMul(), atkRate = 1 + .15 * (G.army.ups.tambours || 0);
+  let i = 0;
+  for (const a of G.allies) {
+    if (a.dead) continue;
+    i++;
+    a.flash = Math.max(0, a.flash - dt); a.pop = Math.max(0, a.pop - dt); a.atkCd -= dt * atkRate; a.atk = Math.max(0, a.atk - dt); a.think -= dt;
+    if (!a.tgt || a.tgt.dead) a.tgt = null;
+    // Choix de cible (échelonné) : autour du point d’assaut, ou autour du héros
+    if (a.think <= 0) {
+      a.think = .2 + Math.random() * .15;
+      const cx = G.order ? G.order.x : a.x, cy = G.order ? G.order.y : a.y, R = G.order ? ARMY.aggro * 1.5 : ARMY.aggro;
+      a.tgt = G.rallyT > 0 ? null : nearest(cx, cy, R, 1)[0] || null;
+      if (a.tgt && a.tgt.node) a.tgt = null;
+      // Laisse : sans ordre, on ne s’éloigne pas trop du héros
+      if (!G.order && a.tgt && d2(a.tgt.x, a.tgt.y, h.x, h.y) > ARMY.leash * ARMY.leash) a.tgt = null;
+    }
+    let tx, ty, stop;
+    if (a.tgt) { tx = a.tgt.x; ty = a.tgt.y; stop = a.ranged ? 170 : a.r + a.tgt.r + 2; }
+    else { const ang = a.slot * 2.39996, rr = 44 + 12 * Math.sqrt(i); tx = home.x + Math.cos(ang) * rr; ty = home.y + Math.sin(ang) * rr * .8; stop = 8; }
+    const dx = tx - a.x, dy = ty - a.y, dd = Math.hypot(dx, dy) || 1;
+    let mx = 0, my = 0;
+    if (dd > stop) { const sp = a.speed * spdK * (a.tgt ? 1 : Math.min(1.6, .5 + dd / 120)) * dt; mx = dx / dd * Math.min(sp, dd - stop); my = dy / dd * Math.min(sp, dd - stop); }
+    // Séparation entre soldats
+    const gx = (a.x / GC) | 0, gy = (a.y / GC) | 0;
+    for (let p = -1; p <= 1; p++) for (let q = -1; q <= 1; q++) { const c = AGRID.get((gx + p) * 1000 + gy + q); if (!c) continue; for (const o of c) { if (o === a || o.dead) continue; const ox = a.x - o.x, oy = a.y - o.y, s2 = ox * ox + oy * oy, min = (a.r + o.r) * .85; if (s2 > 0 && s2 < min * min) { const d = Math.sqrt(s2), k = (min - d) / d * .4; mx += ox * k; my += oy * k; } } }
+    a.x = clamp(a.x + mx, 10, BAL.world.w - 10); a.y = clamp(a.y + my, 10, BAL.world.h - 10);
+    a.moving = Math.abs(mx) + Math.abs(my) > .1;
+    if (Math.abs(dx) > 2) a.face = Math.sign(dx);
+    // Attaque
+    if (a.tgt && dd <= stop + 4 && a.atkCd <= 0) {
+      a.atkCd = a.boss ? .7 : .85; a.atk = .22;
+      const dmg = a.baseDmg * dmgK * (G.waaagh > 0 ? 1.4 : 1);
+      if (a.ranged) { const e = a.tgt, ang = Math.atan2(e.y - 12 - (a.y - 16), e.x - a.x); G.projs.push({ x: a.x, y: a.y - 16, vx: Math.cos(ang) * 520, vy: Math.sin(ang) * 520, dmg, pierce: 0, life: .6, size: 9, shape: 'axe', w: G.armyW, hit: new Set(), spin: 0, glow: ARMY.color }); }
+      else { dmgEnemy(a.tgt, dmg, { w: G.armyW, kb: a.boss ? 8 : 2, fx: a.x, fy: a.y, quiet: Math.random() < .7 }); sparks(a.tgt.x, a.tgt.y - 12, '#fff1c8', 2); if (a.boss) { shake(1.5); forNear(a.tgt.x, a.tgt.y, 60, e => { if (e !== a.tgt) dmgEnemy(e, dmg * .5, { w: G.armyW, quiet: true }); }); } }
+    }
+    if (!a.tgt && a.hp < a.maxHp) a.hp = Math.min(a.maxHp, a.hp + a.maxHp * .02 * dt);
+  }
+  if (G.allies.some(a => a.dead)) G.allies = G.allies.filter(a => !a.dead);
+}
+function drawAlly(a, t) {
+  let y = a.y;
+  if (a.fly) { shadowAt(a.x, y + 4, a.r, a.r * .4, .6); y -= 16 + Math.sin(t * 5 + a.ph) * 3; }
+  else shadowAt(a.x, y + 2, a.r + 5, (a.r + 5) * .42);
+  // Anneau d’équipe vert : on distingue ses troupes d’un coup d’œil.
+  ctx.strokeStyle = hexA(ARMY.color, a.boss ? .9 : .75); ctx.lineWidth = a.boss ? 3 : 2; ellipse(a.x, a.y + 3, a.r + (a.boss ? 14 : 5), (a.r + (a.boss ? 14 : 5)) * .42); ctx.stroke();
+  const frame = a.atk > 0 ? 'atk' : a.fly ? (Math.floor(t * 8 + a.ph) % 2 ? 'w0' : 'w1') : a.moving ? walkFrame(a, t) : 'idle';
+  const bob = a.moving && !a.fly ? -Math.abs(Math.sin(t * 10 + a.ph)) * 1.6 : 0, sc = a.scale * (1 - a.pop * .6);
+  if (a.spirit) ctx.globalAlpha = .72;
+  const key = LOOKS[a.type] ? a.type : 'rodeur';
+  const top = drawUnit(key, frame, a.x, y + 3 + bob, a.face, a.flash > 0, sc);
+  if (a.spirit) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = .28; drawUnit(key, frame, a.x, y + 3 + bob, a.face, true, sc); ctx.globalCompositeOperation = 'source-over'; }
+  ctx.globalAlpha = 1;
+  // Chevron vert au-dessus de la tête
+  ctx.fillStyle = ARMY.color; ctx.beginPath(); ctx.moveTo(a.x - 4, top - 9); ctx.lineTo(a.x, top - 5); ctx.lineTo(a.x + 4, top - 9); ctx.lineTo(a.x + 4, top - 7); ctx.lineTo(a.x, top - 3); ctx.lineTo(a.x - 4, top - 7); ctx.closePath(); ctx.fill();
+  if (a.hp < a.maxHp) hpBar(a.x, top - 14, a.boss ? 40 : 16, a.hp / a.maxHp, ARMY.color);
+}
+// Cage de prisonniers : des barreaux de bois, des miliciens enfermés.
+function drawCage(e, t) {
+  const x = e.x, y = e.y, f = e.flash > 0;
+  shadowAt(x, y + 4, 44, 14);
+  ctx.fillStyle = f ? '#ffffff' : '#4a3220'; ctx.fillRect(x - 38, y - 6, 76, 8);
+  for (let i = 0; i < 3; i++) drawUnit('milicien', 'idle', x - 18 + i * 18, y - 2, i === 1 ? -1 : 1, false, .9);
+  ctx.fillStyle = f ? '#ffffff' : '#6b4423';
+  for (let i = 0; i <= 8; i++) ctx.fillRect(x - 38 + i * 9.25, y - 58, 4, 56);
+  ctx.fillRect(x - 40, y - 62, 80, 7); ctx.fillStyle = '#3a2614'; ctx.fillRect(x - 40, y - 56, 80, 2);
+  ctx.strokeStyle = hexA('#ffd76a', .6 + .3 * Math.sin(t * 5)); ctx.lineWidth = 2.5; ellipse(x, y + 6, 54, 20); ctx.stroke();
+  hpBar(x, y - 74, 52, e.hp / e.maxHp, '#e8b878');
 }
 // ═════════════════════════ Cartes de niveau ═════════════════════════
 // Armes communes à débloquer au camp (défis).
@@ -1669,6 +1878,8 @@ function offerPool() {
   for (const k in PASSIVES) { const l = plv(k); if (l >= PASSIVES[k].max) continue; if (!l && ownedP >= BAL.maxPassives) continue; if (k === 'croissance' && !unlocked('croissance')) continue; out.push({ kind: 'pass', id: k, title: `${PASSIVES[k].name} niv. ${l + 1}`, weight: l ? 2 : 1.6 }); }
   // Talents : des cartes qui transforment les sorts du champion, à partir du niveau 3.
   if (G.level >= 3) G.spells.forEach((sp, i) => { for (const k in SPELLS[sp.id].talents) if (!sp.tal[k]) out.push({ kind: 'tal', sp, i, id: k, title: SPELLS[sp.id].talents[k].name, weight: 1.5 }); });
+  // Cartes d’armée : effectif, ferveur, bannière, vétérans, tambours.
+  for (const k in ARMY_UP) { const l = G.army.ups[k] || 0; if (l < ARMY_UP[k].max) out.push({ kind: 'army', id: k, title: `${ARMY_UP[k].name} niv. ${l + 1}`, weight: 1.8 }); }
   return out;
 }
 function rollOffer() {
@@ -1687,6 +1898,7 @@ function applyOffer(o) {
   if (o.kind === 'new') { addWeapon(o.id); }
   else if (o.kind === 'up') { o.w.lvl++; }
   else if (o.kind === 'tal') { o.sp.tal[o.id] = true; renderSpells(); banner(o.title, SPELLS[o.sp.id].name, 'ult'); }
+  else if (o.kind === 'army') G.army.ups[o.id] = (G.army.ups[o.id] || 0) + 1;
   else if (o.kind === 'pass') { G.passives[o.id] = plv(o.id) + 1; recomputeMods(); }
   else if (o.kind === 'evo') { G.cr -= 1; o.w.evo = true; G.stats.evos++; banner(WEAPONS[o.id].evo.name, 'Évolution', 'ult'); SFX.play('evolve'); shake(6); ring(G.hero.x, G.hero.y, 120, '#ffd76a', .8); sparkle(G.hero.x, G.hero.y - 30, '#ffd76a', 40); }
   else if (o.kind === 'gold') G.gold += o.v;
@@ -1697,6 +1909,7 @@ function openCards() {
   renderCards(); $('#scr-cards').hidden = false; SFX.play('level');
 }
 function cardInfo(o) {
+  if (o.kind === 'army') { const A = ARMY_UP[o.id], l = G.army.ups[o.id] || 0; return { rc: ARMY.color, top: 'Armée', ic: A.icon, name: A.name, desc: A.desc, evo: '', foot: `Niv. ${l} → ${l + 1} sur ${A.max}` }; }
   if (o.kind === 'tal') { const S = SPELLS[o.sp.id], T = S.talents[o.id]; return { rc: 'var(--epic)', top: `Talent · ${S.name}`, ic: S.icon, name: T.name, desc: T.desc, evo: '', foot: `Transforme ton sort (${o.i ? 'Espace' : 'clic droit'})` }; }
   if (o.kind === 'new') { const W = WEAPONS[o.id]; return { rc: 'var(--rare)', top: 'Nouvelle arme', ic: W.icon, name: W.name, desc: W.desc, evo: `Évolue avec ${PASSIVES[W.evo.with].name} → ${W.evo.name}`, foot: 'Niv. 1 sur 5' }; }
   if (o.kind === 'up') { const W = WEAPONS[o.id]; return { rc: 'var(--common)', top: 'Amélioration', ic: W.icon, name: W.name, desc: upDesc(W, o.w.lvl), evo: o.w.lvl + 1 === 5 ? `Au niveau 5 : évolue avec ${PASSIVES[W.evo.with].name} et 1 cristal` : '', foot: `Niv. ${o.w.lvl} → ${o.w.lvl + 1} sur 5` }; }
@@ -1769,6 +1982,7 @@ function update(dt) {
   updateSpawns(dt);
   updateMission(dt);
   updateEnemies(dt);
+  updateAllies(dt);
   updateEProjs(dt);
   updateWeapons(dt);
   updateProjs(dt);
@@ -2070,11 +2284,14 @@ function render() {
   const aura = G.weapons.find(w => w.id === 'feu');
   if (aura) { const s = wstats(aura); ctx.fillStyle = hexA(aura.evo ? '#ffd76a' : '#ff8a3a', .1 + .04 * Math.sin(t * 6)); ellipse(h.x, h.y - 10, s.radius, s.radius * .8); ctx.fill(); addLight(h.x, h.y - 10, s.radius * 1.5, '#ff8a3a', .35); }
   drawObjectiveGround(t);
+  // Point d’assaut de l’armée : bannière verte et onde qui pulse
+  if (G.order) { const o = G.order, k = (t * 1.5) % 1; ctx.strokeStyle = hexA(ARMY.color, .7 * (1 - k)); ctx.lineWidth = 3; ellipse(o.x, o.y, 20 + 50 * k, (20 + 50 * k) * .5); ctx.stroke(); ctx.fillStyle = '#2a1a10'; ctx.fillRect(o.x - 1.5, o.y - 44, 3, 44); ctx.fillStyle = ARMY.color; ctx.beginPath(); ctx.moveTo(o.x + 1.5, o.y - 44); ctx.lineTo(o.x + 24 + Math.sin(t * 6) * 3, o.y - 37); ctx.lineTo(o.x + 1.5, o.y - 29); ctx.closePath(); ctx.fill(); addLight(o.x, o.y - 20, 90, ARMY.color, .45); }
   // Entités triées par profondeur (décor compris, pour passer derrière les arbres et les ruines)
   const list = [], add = (o, y, ty) => list.push({ o, y, ty });
   const DEC = decorFor(G.M.ground);
   for (const d of DEC) if (inV(d.x, d.y, 120)) { if (d.tall) add(d, d.y, 0); else drawDecorItem(d, h); }
   for (const tu of G.turrets) add(tu, tu.y, 1);
+  for (const a of G.allies) if (inV(a.x, a.y, 60)) add(a, a.y + (a.fly ? 30 : 0), 7);
   for (const e of G.enemies) if (!e.dead && !e.fly && inV(e.x, e.y, 60)) add(e, e.y, 2);
   if (!G.deadT) add(h, h.y, 3);
   if (G.cart) add(G.cart, G.cart.y, 4);
@@ -2088,7 +2305,8 @@ function render() {
     else if (ty === 3) drawHero(t);
     else if (ty === 4) drawCart(o, t);
     else if (ty === 5) drawSpike(o);
-    else drawGhost(o);
+    else if (ty === 6) drawGhost(o);
+    else drawAlly(o, t);
   }
   drawOrbits(t);
   if (G.spin) drawSpin(t);
@@ -2184,6 +2402,7 @@ function collectLights(t, v) {
   if (o && o.type === 'zone') L1(o.x, o.y - 30, 220, '#ffd76a', .5 + .4 * o.prog / o.need, 50, .35);
   if (G.cart) L1(G.cart.x, G.cart.y - 40, 170, '#ffcf8a', .7, 18, .4);
   if (G.spin) L1(h.x, h.y - 10, G.spin.r * 1.6, '#ff9b3d', .5);
+  for (const a of G.allies) if (a.boss && inV(a.x, a.y, 100)) L1(a.x, a.y - 30, 220, ARMY.color, .5, 50, .2);
   if (G.waaagh > 0) L1(h.x, h.y - 20, 260, '#ff4a2a', .6, 60, .3);
   if (G.starfall > 0) L1(h.x, h.y, 600, '#9fc8ff', .25);
   for (const te of G.tele) if (!te.ally) L1(te.k === 'line' ? te.e.x + te.dx * te.len / 2 : te.x, te.k === 'line' ? te.e.y + te.dy * te.len / 2 : te.y, (te.r || te.len / 2) * 1.6, '#ff4a2a', .4);
@@ -2237,7 +2456,7 @@ function drawNest(e, t) {
   hpBar(x, y - r - 30, 48, e.hp / e.maxHp, '#c58cff');
 }
 function drawEnemy(e, t) {
-  if (e.T.static) { drawNest(e, t); return; }
+  if (e.T.static) { if (e.T.cage) drawCage(e, t); else drawNest(e, t); return; }
   let y = e.y;
   if (e.fly) { shadowAt(e.x, y + 4, e.r * 1.1, e.r * .4, .7); y -= 16 + Math.sin(t * 5 + e.ph) * 3; }
   else shadowAt(e.x, y + 2, e.r + 5, (e.r + 5) * .42);
@@ -2386,6 +2605,17 @@ function drawObjectiveGround(t) {
     ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(o.x - 13, o.y + 2); ctx.lineTo(o.x - 11, o.y - 50); ctx.quadraticCurveTo(o.x, o.y - 60, o.x + 11, o.y - 50); ctx.lineTo(o.x + 13, o.y + 2); ctx.closePath(); ctx.fill();
     ctx.fillStyle = hexA('#ffd76a', .4 + .6 * f); ctx.fillRect(o.x - 2, o.y - 44, 4, 30); ctx.fillRect(o.x - 8, o.y - 34, 16, 3); ctx.fillRect(o.x - 6, o.y - 22, 12, 3);
     if (o.inside && Math.random() < .3) sparkle(o.x, o.y - 30, '#ffd76a', 1);
+  } else if (o.type === 'fort') {
+    // Palissade du fort cendreux, avec une brèche, et l’étendard du capitaine.
+    const p = o.fort, R = 175;
+    ctx.fillStyle = 'rgba(40,28,18,.35)'; ellipse(p.x, p.y, R, R * .78); ctx.fill();
+    for (let i = 0; i < 34; i++) {
+      const a = i / 34 * TAU; if (a > 1.2 && a < 1.9) continue;
+      const x = p.x + Math.cos(a) * R, y = p.y + Math.sin(a) * R * .78, hh = 26 + (i % 3) * 4;
+      ctx.fillStyle = '#4a2c15'; ctx.fillRect(x - 4, y - hh, 8, hh); ctx.fillStyle = '#7a5230'; ctx.fillRect(x - 3, y - hh, 4, hh);
+      ctx.fillStyle = '#c89a5a'; ctx.beginPath(); ctx.moveTo(x - 4, y - hh); ctx.lineTo(x, y - hh - 7); ctx.lineTo(x + 4, y - hh); ctx.closePath(); ctx.fill();
+    }
+    if (!o.capt.dead) { ctx.fillStyle = '#2a1a10'; ctx.fillRect(p.x + 40, p.y - 90, 4, 90); ctx.fillStyle = '#8a2a3a'; ctx.beginPath(); ctx.moveTo(p.x + 44, p.y - 90); ctx.lineTo(p.x + 80 + Math.sin(t * 4) * 4, p.y - 80); ctx.lineTo(p.x + 44, p.y - 68); ctx.closePath(); ctx.fill(); addLight(p.x, p.y - 20, 240, '#ff7a4a', .45); }
   } else if (o.type === 'escorte' && G.cart) {
     const c = G.cart, d = o.dest;
     ctx.setLineDash([4, 12]); ctx.lineDashOffset = -t * 16; ctx.strokeStyle = 'rgba(255,215,106,.45)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(d.x, d.y); ctx.stroke(); ctx.setLineDash([]); ctx.lineDashOffset = 0;
@@ -2468,6 +2698,7 @@ function updateHUD(dt) {
   $('#h-xp').style.width = (100 * G.xp / BAL.xpNeed(G.level)).toFixed(1) + '%';
   setText('#h-lv', G.level); setText('#h-kills', fmt(G.kills)); setText('#h-or', fmt(G.gold)); setText('#h-cr', fmt(G.cr));
   setText('#h-time', clock(G.t));
+  setText('#h-army', ARMY[G.fac].mode === 'golem' ? `${G.allies.length} / ${armyCap()} · forge ${G.army.gauge}/${Math.max(4, ARMY.nains.every - (G.army.ups.ferveur || 0))}` : `${G.allies.length} / ${armyCap()}`);
   const hf = clamp(G.hero.hp / G.hero.maxHp, 0, 1);
   $('#hb-hp').style.width = (hf * 100).toFixed(1) + '%'; $('#hb-hpd').style.width = (hf * 100).toFixed(1) + '%';
   setText('#hb-hpt', `${Math.ceil(G.hero.hp)} / ${Math.round(G.hero.maxHp)}`);
@@ -2500,6 +2731,9 @@ function renderSpells() {
     b.addEventListener('click', () => castSpell(i));
     box.appendChild(b);
   });
+  // Ordre de ralliement (Maj) ; l’assaut se donne au clic gauche.
+  const rb = document.createElement('button'); rb.type = 'button'; rb.className = 'sp rally'; rb.title = 'Ralliement : l’armée revient autour de toi, soignée et plus résistante pendant 3 s. L’assaut se donne au clic gauche.'; rb.setAttribute('aria-label', 'Ordre : ralliement');
+  rb.innerHTML = '<span aria-hidden="true">🚩</span><span class="cd"></span><span class="t"></span><span class="key">Maj</span>'; rb.addEventListener('click', rallyArmy); box.appendChild(rb);
   const U = ULTS[G.fac], u = document.createElement('button');
   u.type = 'button'; u.className = 'sp ult'; u.id = 'ult'; u.title = `${U.name} : ${U.desc}`; u.setAttribute('aria-label', `Ultime : ${U.name}`);
   u.innerHTML = `<span aria-hidden="true">${U.icon}</span><span class="cd"></span><span class="t"></span><span class="key">R</span>`;
@@ -2515,7 +2749,9 @@ function updateSpellHUD() {
     b.querySelector('.cd').style.setProperty('--p', f.toFixed(3));
     if (hudCache['sp' + i] !== key) { hudCache['sp' + i] = key; b.querySelector('.t').textContent = empty ? Math.ceil(sp.t) : ''; b.classList.toggle('ready', !empty); const am = b.querySelector('.ammo'); if (am) am.textContent = max > 1 ? sp.ammo : ''; }
   });
-  const u = btns[G.spells.length]; if (!u) return;
+  const rb = btns[G.spells.length];
+  if (rb) { const f = G.rallyCd / ARMY.rallyCd, key = Math.ceil(G.rallyCd); rb.querySelector('.cd').style.setProperty('--p', f.toFixed(3)); if (hudCache.spr !== key) { hudCache.spr = key; rb.querySelector('.t').textContent = G.rallyCd > 0 ? key : ''; rb.classList.toggle('ready', G.rallyCd <= 0 && G.allies.length > 0); } }
+  const u = btns[G.spells.length + 1]; if (!u) return;
   const uf = G.ult.v / G.ult.need;
   u.querySelector('.cd').style.setProperty('--p', (1 - uf).toFixed(3));
   const key = uf >= 1 ? 'r' : Math.floor(uf * 100);
@@ -2531,6 +2767,8 @@ function updateMissionHUD() {
     if (o.type === 'nids') { text = `${o.prog} / 3 nids détruits`; p = o.prog / 3; }
     else if (o.type === 'zone') { text = o.inside ? `Charge : ${Math.floor(o.prog)} / ${o.need}${NB}s` : 'Retourne dans le cercle !'; p = o.prog / o.need; }
     else if (o.type === 'chasse') { text = 'Rattrape le porteur doré'; p = 0; }
+    else if (o.type === 'prisonniers') { text = 'Brise la cage gardée'; p = 1 - o.cage.hp / o.cage.maxHp; }
+    else if (o.type === 'fort') { text = 'Abats le capitaine (étendard rouge)'; p = o.prog; }
     else if (o.type === 'escorte') { text = G.cart && G.cart.moving ? `Trajet : ${Math.floor(o.prog * 100)}${NB}%` : 'Reste près de la caravane !'; p = o.prog; }
   } else if (ms.phase === 'boss') { const b = G.enemies.find(e => e.final && !e.dead); title = b ? `Abats ${b.T.name}` : 'Victoire !'; text = 'Boss final'; p = b ? 1 - b.hp / b.maxHp : 1; }
   setText('#m-eyebrow', eb); setText('#m-title', title); setText('#m-text', text);
@@ -2563,13 +2801,13 @@ function endRun(win) {
   $('#end-box').className = 'end ' + (win ? 'win' : 'lose');
   $('#end-eyebrow').textContent = `${G.H.name} · ${G.M.name} · ${G.D.name}`;
   $('#end-title').textContent = win ? 'Mission accomplie !' : G.failReason || `${G.H.name} est tombé`;
-  const stats = [['Durée', clock(G.t)], ['Objectifs', `${G.mis.done} / ${G.M.objectives.length}`], ['Ennemis vaincus', fmt(G.kills)], ['Niveau', G.level], ['Meilleur combo', '×' + fmt(G.combo.max)], ['Évolutions', G.stats.evos], ['Talents', G.spells.reduce((n, sp) => n + Object.keys(sp.tal).length, 0)], ['Ultimes', G.ult.uses]];
+  const stats = [['Durée', clock(G.t)], ['Objectifs', `${G.mis.done} / ${G.M.objectives.length}`], ['Ennemis vaincus', fmt(G.kills)], ['Niveau', G.level], ['Meilleur combo', '×' + fmt(G.combo.max)], ['Évolutions', G.stats.evos], ['Recrues', `${G.army.recruits} (${G.allies.length} debout)`], ['Ultimes', G.ult.uses]];
   $('#end-stats').innerHTML = stats.map(([k, v]) => `<div><b>${v}</b><span>${k}</span></div>`).join('');
   $('#end-runes').textContent = `+${runes} runes (total : ${META.runes})`;
   $('#end-unlocks').innerHTML = fresh.map(c => `<span>✦ Débloqué : ${c.reward}</span>`).join('');
-  const rows = [...G.weapons, { ...G.spellW, spell: true }], maxD = Math.max(1, ...rows.map(w => w.dmg));
+  const rows = [...G.weapons, { ...G.spellW, spell: true }, { ...G.armyW, army: true }], maxD = Math.max(1, ...rows.map(w => w.dmg));
   $('#end-weapons').innerHTML = rows.sort((a, b) => b.dmg - a.dmg).map(w => {
-    const W = WEAPONS[w.id], ic = w.spell ? '✨' : w.evo ? W.evo.icon : W.icon, name = w.spell ? 'Sorts du champion' : `${w.evo ? W.evo.name : W.name} · niv. ${w.lvl}`;
+    const W = WEAPONS[w.id], ic = w.army ? '⚔️' : w.spell ? '✨' : w.evo ? W.evo.icon : W.icon, name = w.army ? 'Ton armée' : w.spell ? 'Sorts du champion' : `${w.evo ? W.evo.name : W.name} · niv. ${w.lvl}`;
     return `<div class="wrow"><span>${ic}</span><span>${name}</span><span>${fmt(w.dmg)} dégâts</span><span class="bar"><i style="width:${(100 * w.dmg / maxD).toFixed(0)}%"></i></span></div>`;
   }).join('');
   $('#scr-end').hidden = false;
@@ -2584,7 +2822,7 @@ function buildMenu() {
       <div class="fac-head"><canvas data-hero="${F.id}" aria-hidden="true"></canvas><div><h3>${H.name}</h3><p class="sub">${F.name} · ${H.title}</p></div></div>
       <p class="pitch">${fr(F.pitch)}</p>
       <div class="stats"><span>PV <b>${H.hp}</b></span><span>Vitesse <b>${H.speed}</b></span><span>Armure <b>${H.armor}</b></span></div>
-      <ul class="kit"><li><em>Attaque</em>${W.icon} ${W.name}</li><li><em>Clic droit</em>${s1.icon} ${s1.name}</li><li><em>Espace</em>${s2.icon} ${s2.name}</li><li><em>Ultime</em>${U.icon} ${U.name}</li></ul>
+      <ul class="kit"><li><em>Armée</em>${fr(ARMY[F.id].desc)}</li><li><em>Attaque</em>${W.icon} ${W.name}</li><li><em>Clic droit</em>${s1.icon} ${s1.name}</li><li><em>Espace</em>${s2.icon} ${s2.name}</li><li><em>Ultime</em>${U.icon} ${U.name}</li></ul>
     </button>`;
   }).join('');
   for (const c of document.querySelectorAll('canvas[data-hero]')) heroPortrait(c, c.dataset.hero);
@@ -2626,7 +2864,7 @@ function startRun() {
   SFX.init(); newRun(selFac); G.phase = 'play';
   for (const id of ['#scr-menu', '#scr-cards', '#scr-pause', '#scr-end', '#scr-camp']) $(id).hidden = true;
   $('#hud').hidden = false; for (const k in hudCache) delete hudCache[k]; $('#toasts').innerHTML = '';
-  $('#hint').innerHTML = lastPointer === 'mouse' ? '<b>ZQSD</b> pour bouger, la <b>souris</b> pour viser. Sorts : <b>clic droit</b> et <b>Espace</b>, ultime : <b>R</b>.' : 'Pose le doigt et <b>glisse</b> pour te déplacer. Touche les sorts en bas.';
+  $('#hint').innerHTML = lastPointer === 'mouse' ? '<b>ZQSD</b> pour bouger, la <b>souris</b> pour viser. Sorts : <b>clic droit</b> et <b>Espace</b>, ultime : <b>R</b>.<br>Les ennemis vaincus rejoignent ton <b>armée</b> : <b>clic gauche</b> = assaut, <b>Maj</b> = ralliement.' : 'Pose le doigt et <b>glisse</b> pour te déplacer. Touche les sorts en bas.';
   updateAimBtn();
   renderSlots(); renderSpells();
   heroPortrait($('#hb-portrait'), G.fac); $('#hb-name').innerHTML = `${G.H.name}<small>${G.F.name}</small>`; $('#herobox').style.setProperty('--hc', G.F.color);
@@ -2654,7 +2892,7 @@ window.addEventListener('pointermove', ev => {
 cv.addEventListener('contextmenu', ev => ev.preventDefault());
 cv.addEventListener('pointerdown', ev => {
   if (!running()) return;
-  if (ev.pointerType === 'mouse') { if (ev.button === 2) castSpell(0); return; }
+  if (ev.pointerType === 'mouse') { if (ev.button === 2) castSpell(0); else if (ev.button === 0) { const p = aimPoint(); commandArmy(p.x, p.y); } return; }
   joy.on = true; joy.id = ev.pointerId; const r = cv.getBoundingClientRect();
   joy.ox = joy.x = ev.clientX - r.left; joy.oy = joy.y = ev.clientY - r.top;
   try { cv.setPointerCapture(ev.pointerId); } catch (e) { /* ignore */ }
@@ -2674,6 +2912,8 @@ window.addEventListener('keydown', ev => {
   if (ev.key === ' ') { ev.preventDefault(); castSpell(1); }
   if (k === 'e') castSpell(0);
   if (k === 'r') castUlt();
+  if (ev.key === 'Shift') rallyArmy();
+  if (k === 'f') { const p = aimPoint(); commandArmy(p.x, p.y); }
   if (k === 'c') toggleAim();
   if (k === 'm') { SFX.init(); SFX.setMuted(!SFX.muted); }
   if (k === 'p') openPause();
@@ -2726,7 +2966,7 @@ function boot(data) {
 window.claude?.hot?.snapshot?.(() => ({ fac: selFac }));
 window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
 // Accès console pour les tests d’équilibrage.
-window.RR = { BAL, HEROES, WEAPONS, PASSIVES, ENEMIES, get G() { return G; }, get joy() { return joy; }, keys, start(fac, map, diff) { selFac = fac; if (map) selMap = map; if (diff) selDiff = diff; startRun(); }, update, render, updateHUD, pickCard, castUlt, wstats, rollOffer, applyOffer, unitSprite, castSpell, SPELLS, MAPS, get META() { return META; }, set META(v) { META = v; }, saveMeta, showCamp, showMenu, objectiveTargets, mouse, L, cam };
+window.RR = { BAL, HEROES, WEAPONS, PASSIVES, ENEMIES, get G() { return G; }, get joy() { return joy; }, keys, start(fac, map, diff) { selFac = fac; if (map) selMap = map; if (diff) selDiff = diff; startRun(); }, update, render, updateHUD, pickCard, castUlt, wstats, rollOffer, applyOffer, unitSprite, castSpell, SPELLS, MAPS, get META() { return META; }, set META(v) { META = v; }, saveMeta, showCamp, showMenu, objectiveTargets, mouse, L, cam, commandArmy, rallyArmy, armyCap, recruit };
 })();
 </script>
 <script>

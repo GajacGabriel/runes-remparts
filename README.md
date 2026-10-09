@@ -5,10 +5,14 @@ Ce dépôt sert de terrain d’essai pour trouver le fun avant le passage sur Un
 
 **Jouer :** https://gajacgabriel.github.io/runes-remparts/
 
-## Le concept (v0.8 : champions, sorts et missions)
+## Le concept (v0.9 : la Horde retournée)
+
+**USP : tu pars seul, et tu retournes la horde.** Les ennemis vaincus rejoignent ton armée ; tu la mènes contre la marée ennemie.
+C’est la première des trois couches du concept complet : **Runes** (sorts forgés, à venir), **Horde** (l’armée, pendant la mission), **Remparts** (citadelle ambulante, à l’échelle de la campagne, à venir).
 
 - **Contrôles** : ZQSD / WASD / flèches pour bouger, **souris pour viser**. L’attaque du champion tire en continu vers le curseur (C bascule en visée automatique).
 - **Sorts** : **clic droit** (ou E) et **Espace**, chacun avec sa recharge. **Ultime** : **R**, rechargé par les kills.
+- **Ton armée** : chaque faction recrute à sa manière. Les **orcs** soumettent un quart des ennemis achevés ; les **nains** forgent un **golem runique** tous les 9 kills ; les **elfes** envoûtent des **esprits** rapides mais fragiles. L’armée suit le héros et attaque tout ce qui approche. **Clic gauche** (ou F) : assaut sur le point visé. **Maj** : ralliement (soin, résistance). Cartes d’armée : effectif, ferveur, bannière, vétérans, tambours.
 - **Trois champions** :
 
 | Champion | Attaque (visée) | Clic droit | Espace | Ultime |
@@ -20,11 +24,14 @@ Ce dépôt sert de terrain d’essai pour trouver le fun avant le passage sur Un
 - **Synergies** : un ennemi étourdi subit +30 % de dégâts, un ennemi marqué +25 %. Enchaîner ses sorts paie.
 - **Build en partie** : chaque niveau propose 3 cartes : armes automatiques, passifs, et **talents** qui transforment les sorts (par exemple, une Charge qui laisse une traînée de braises, des Tourelles jumelles, une Volée de givre). Les évolutions d’armes restent : arme au niveau 5 + passif indiqué + 1 cristal.
 - **Missions** : chaque carte enchaîne 5 objectifs, puis un boss final. Les flèches dorées guident vers l’objectif.
+  - **Libérer les prisonniers** : brise la cage gardée, 8 miliciens rejoignent ton armée.
+  - **Prendre un fort** : abats le capitaine, toute sa garnison passe dans ton camp.
   - **Détruire les nids** qui crachent la horde.
   - **Tenir la rune** : rester dans le cercle pour la charger, pendant que la horde afflue.
   - **Traquer le porteur** de runes qui s’enfuit.
   - **Escorter la caravane**, qui n’avance que si le champion reste près d’elle. Si elle tombe, la mission est perdue.
-  - Un **boss intermédiaire** arrive au milieu de la mission.
+  - Un **boss intermédiaire** arrive au milieu de la mission : vaincu, il **devient ton général**.
+  - Les boss frappent aussi ton armée (charge, onde de choc).
 - **Deux missions** : *Les Marches cendrées* (boss : Chef de guerre cendré) et *Le Col du Néant* (boss : Seigneur du Néant), en trois difficultés : Normal, Héroïque, Légendaire.
 - **Le camp, entre les missions** : chaque mission rapporte des **runes**, même en cas de défaite. On les dépense en améliorations permanentes (PV, dégâts, vitesse, recharge des sorts, XP, aimant, or de départ). Des **défis** débloquent des armes, une mission, un passif et les difficultés supérieures.
 - La progression est sauvegardée dans le navigateur.
@@ -53,3 +60,4 @@ Le menu pause contient des **outils de test** (+1 niveau, +1 minute, or, cristal
 - v0.5 à v0.6 : récolte, butin et remparts, en portrait mobile. Pas concluant : « un survivor comme les autres ».
 - v0.7 : virage PC à la Swarm : visée à la souris, sorts actifs et talents, missions à objectifs, camp de progression.
 - v0.8 : grosse passe graphique (éclairage dynamique, décors, effets) et sorts plus amusants (charges, onde de choc, faille, flèches chargées, marques et synergies).
+- v0.9 : USP « la Horde retournée » : armée convertie par faction, ordres d’assaut et de ralliement, prisonniers, prise de fort, boss vaincu devenu général.
