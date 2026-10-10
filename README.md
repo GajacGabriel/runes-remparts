@@ -5,37 +5,31 @@ Ce dépôt sert de terrain d’essai pour trouver le fun avant le passage sur Un
 
 **Jouer :** https://gajacgabriel.github.io/runes-remparts/
 
-## Le concept (v0.9 : la Horde retournée)
+## Le concept (v0.10 : un champion, une mécanique)
 
-**USP : tu pars seul, et tu retournes la horde.** Les ennemis vaincus rejoignent ton armée ; tu la mènes contre la marée ennemie.
-C’est la première des trois couches du concept complet : **Runes** (sorts forgés, à venir), **Horde** (l’armée, pendant la mission), **Remparts** (citadelle ambulante, à l’échelle de la campagne, à venir).
+**Fini les armes génériques.** Chaque champion a une mécanique signature unique, et toutes ses cartes de niveau la font évoluer.
+Lyriel est le premier champion jouable ; Grukk (la Hache liée) et Durgan (la Forge vivante) suivront.
 
-- **Contrôles** : ZQSD / WASD / flèches pour bouger, **souris pour viser**. L’attaque du champion tire en continu vers le curseur (C bascule en visée automatique).
-- **Sorts** : **clic droit** (ou E) et **Espace**, chacun avec sa recharge. **Ultime** : **R**, rechargé par les kills.
-- **Ton armée** : chaque faction recrute à sa manière. Les **orcs** soumettent un quart des ennemis achevés ; les **nains** forgent un **golem runique** tous les 9 kills ; les **elfes** envoûtent des **esprits** rapides mais fragiles. L’armée suit le héros et attaque tout ce qui approche. **Clic gauche** (ou F) : assaut sur le point visé. **Maj** : ralliement (soin, résistance). Cartes d’armée : effectif, ferveur, bannière, vétérans, tambours.
-- **Trois champions** :
+### Lyriel, Tisseuse d’étoiles
+- **Clic gauche** : ses flèches lunaires partent en continu vers le curseur (C : visée automatique). ZQSD / WASD / flèches pour bouger.
+- **Étoile filante** (**clic droit** ou E, 3 charges) : une comète plante une étoile au point visé.
+- **Constellation** : dès 3 étoiles, elles se relient. Les **fils d’argent** brûlent ce qui les traverse, une **pluie d’astres** frappe l’intérieur.
+- **Prisme** : une flèche qui traverse une étoile se divise en 3. On vise à travers ses propres étoiles.
+- **Pas lunaire** (**Espace**) : dash invulnérable. **Traverser sa constellation la fait exploser en supernova** (le dash est rendu).
+- **Voûte céleste** (**R**) : trois étoiles autour d’elle et, pendant 7 s, jusqu’à 6 étoiles toutes reliées.
+- **Arbre de talents** (les seules cartes de niveau, plus quelques bénédictions mineures) : trois branches, **Astronome** (constellations), **Archère** (flèches), **Danseuse** (mobilité, supernova). 5 cartes dans une branche débloquent sa **légendaire** : *Zodiaque* (supernova automatique), *Pluie d’argent* (les flèches se dédoublent sur les fils), *Étoile du berger* (chaque supernova recharge tout et soigne).
 
-| Champion | Attaque (visée) | Clic droit | Espace | Ultime |
-|---|---|---|---|---|
-| **Grukk** (orc, mêlée) | Lancer de haches | **Charge** : fonce, renverse tout, retombe en onde de choc (un kill rembourse 60 % de la recharge) | **Tourbillon** : avance en aspirant la horde, finit en éruption | WAAAGH ! |
-| **Durgan** (nain, contrôle) | Marteau qui revient | **Tourelle runique** lancée en cloche : impact étourdissant, tir rapide, explosion finale | **Séisme** : une faille de pics de roche court vers le curseur et explose | Barrage runique au curseur |
-| **Lyriel** (elfe, distance) | Arc perçant | **Roulade** d’esquive : les 2 flèches suivantes sont chargées (énormes, perforantes) | **Volée** au curseur : les ennemis touchés sont marqués | Nuit des étoiles |
+### La Nuit des étoiles filantes
+Une mission rythmée par des **événements**, puis un **boss** dans son arène :
+- **Chute d’étoiles** : des étoiles tombent du ciel ; leurs éclats rechargent l’Étoile filante.
+- **Lune de sang** : la horde enrage (plus rapide, plus nombreuse), chaque kill vaut double XP.
+- **Hérauts du Dévoreur** : trois élites qui foncent sur tes étoiles pour les dévorer et grossir.
+- **L’Éclipse : le Dévoreur d’étoiles.** Une arène dont on ne sort pas. Il **mange tes étoiles** pour se soigner, mais une supernova déclenchée par ton Pas lunaire **sur lui** le blesse ×2,5. Trois phases : rayon du Néant, puits gravitationnels, puis **éclipse** où seules tes étoiles éclairent l’arène.
 
-- **Synergies** : un ennemi étourdi subit +30 % de dégâts, un ennemi marqué +25 %. Enchaîner ses sorts paie.
-- **Build en partie** : chaque niveau propose 3 cartes : armes automatiques, passifs, et **talents** qui transforment les sorts (par exemple, une Charge qui laisse une traînée de braises, des Tourelles jumelles, une Volée de givre). Les évolutions d’armes restent : arme au niveau 5 + passif indiqué + 1 cristal.
-- **Missions** : chaque carte enchaîne 5 objectifs, puis un boss final. Les flèches dorées guident vers l’objectif.
-  - **Libérer les prisonniers** : brise la cage gardée, 8 miliciens rejoignent ton armée.
-  - **Prendre un fort** : abats le capitaine, toute sa garnison passe dans ton camp.
-  - **Détruire les nids** qui crachent la horde.
-  - **Tenir la rune** : rester dans le cercle pour la charger, pendant que la horde afflue.
-  - **Traquer le porteur** de runes qui s’enfuit.
-  - **Escorter la caravane**, qui n’avance que si le champion reste près d’elle. Si elle tombe, la mission est perdue.
-  - Un **boss intermédiaire** arrive au milieu de la mission : vaincu, il **devient ton général**.
-  - Les boss frappent aussi ton armée (charge, onde de choc).
-- **Deux missions** : *Les Marches cendrées* (boss : Chef de guerre cendré) et *Le Col du Néant* (boss : Seigneur du Néant), en trois difficultés : Normal, Héroïque, Légendaire.
-- **Le camp, entre les missions** : chaque mission rapporte des **runes**, même en cas de défaite. On les dépense en améliorations permanentes (PV, dégâts, vitesse, recharge des sorts, XP, aimant, or de départ). Des **défis** débloquent des armes, une mission, un passif et les difficultés supérieures.
-- La progression est sauvegardée dans le navigateur.
-- **Rendu** : sol peint par morceaux (sentiers, fleurs, fissures du Néant), forêts, ruines et braseros, cristaux luminescents, éclairage dynamique (pénombre, lumière des sorts, projectiles et explosions), halos, fumée, brume, corps qui tombent, images rémanentes.
+### Le reste
+- **Trois difficultés** (Normal, Héroïque, Légendaire) et **le camp** : runes gagnées à chaque mission, améliorations permanentes, défis de déblocage. Progression sauvegardée dans le navigateur.
+- **Rendu** : éclairage dynamique, sol peint par morceaux, forêts et ruines, braseros, halos, fumée, brume.
+- L’armée (v0.9) est désactivée, et les anciennes missions à objectifs sont mises de côté.
 
 ## Itérer sur l’équilibrage
 
@@ -45,8 +39,9 @@ Tout tient dans `index.html`. Les réglages de design sont regroupés en haut du
 |---|---|
 | `BAL` | Débit et PV des ennemis, marées, XP, élites, encerclements, rythme des objectifs, PV des boss, runes gagnées |
 | `HEROES`, `FACTIONS`, `ULTS` | Champions, arme signature, sorts, ultimes |
-| `SPELLS` | Les 6 sorts : recharge, dégâts, talents |
-| `MAPS`, `DIFFS`, `OBJ` | Missions (objectifs, boss), difficultés |
+| `STAR`, `TREE` | Kit de Lyriel (étoiles, constellation, supernova, flèches) et son arbre de talents |
+| `SPELLS` | Sorts (dont Étoile filante et Pas lunaire) |
+| `MAPS`, `EVENTS`, `DIFFS` | Missions (chronologie d’événements, boss), difficultés |
 | `CAMP`, `CHALLENGES` | Améliorations permanentes et défis de déblocage |
 | `WEAPONS`, `PASSIVES`, `ENEMIES` | Armes, passifs, bestiaire |
 
@@ -61,3 +56,4 @@ Le menu pause contient des **outils de test** (+1 niveau, +1 minute, or, cristal
 - v0.7 : virage PC à la Swarm : visée à la souris, sorts actifs et talents, missions à objectifs, camp de progression.
 - v0.8 : grosse passe graphique (éclairage dynamique, décors, effets) et sorts plus amusants (charges, onde de choc, faille, flèches chargées, marques et synergies).
 - v0.9 : USP « la Horde retournée » : armée convertie par faction, ordres d’assaut et de ralliement, prisonniers, prise de fort, boss vaincu devenu général.
+- v0.10 : refonte centrée champion : Lyriel et ses constellations (étoiles, prisme, supernova), arbre de talents à 3 branches, mission à événements, boss Dévoreur d’étoiles en 3 phases. Armes génériques et armée retirées.

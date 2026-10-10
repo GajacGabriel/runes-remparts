@@ -1,7 +1,7 @@
 // Service worker : permet d’installer le jeu comme une appli et d’y jouer hors ligne.
 // Stratégie « réseau d’abord » : chaque mise à jour publiée est récupérée dès qu’il y a du réseau,
 // la copie en cache ne sert qu’en secours hors ligne.
-const CACHE = 'runes-remparts-v9';
+const CACHE = 'runes-remparts-v10';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

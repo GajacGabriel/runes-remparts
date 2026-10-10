@@ -173,6 +173,9 @@ button { font: inherit; color: inherit; }
   background: linear-gradient(170deg, color-mix(in srgb, var(--fc) 13%, #221b14), #18130e 70%); transition: transform .15s, box-shadow .15s; }
 .fac:hover { transform: translateY(-2px); }
 .fac[aria-pressed="true"] { border-color: var(--fc); box-shadow: inset 0 0 0 1px var(--fc), 0 0 1.6rem color-mix(in srgb, var(--fc) 30%, transparent); }
+.fac.locked { cursor: default; filter: grayscale(.75) brightness(.75); }
+.fac.locked:hover { transform: none; }
+.fac.locked .pitch { font-style: italic; }
 .fac-head { display: flex; gap: .65rem; align-items: center; }
 .fac-head canvas { width: 3.2rem; height: 3.9rem; image-rendering: pixelated; flex: none; }
 .fac h3 { margin: 0; font-family: var(--f-display); font-size: 1.55rem; font-weight: 700; line-height: 1; }
@@ -295,8 +298,8 @@ kbd { font-family: var(--f-body); font-size: .75em; font-weight: 800; padding: 0
   <section class="screen" id="scr-menu">
     <div class="menu">
       <div class="brand">
-        <div><p class="eyebrow">Prototype jouable · v0.9</p><h1>Runes <span>&amp;</span> Remparts</h1></div>
-        <p class="tag">Pars seul, retourne la horde. Chaque ennemi vaincu peut grossir ton armée : libère des prisonniers, prends des forts, et lance ta horde contre la leur.</p>
+        <div><p class="eyebrow">Prototype jouable · v0.10</p><h1>Runes <span>&amp;</span> Remparts</h1></div>
+        <p class="tag">Un champion, une mécanique. Lyriel tisse des constellations sur le champ de bataille et fait exploser la nuit. Survis à la Nuit des étoiles filantes et abats le Dévoreur d’étoiles.</p>
       </div>
       <div class="facs" id="facs"></div>
       <div class="row2">
@@ -314,11 +317,11 @@ kbd { font-family: var(--f-body); font-size: .75em; font-weight: 800; padding: 0
         <h4>Les bases</h4>
         <ul>
           <li><b>Déplacement</b> : <kbd>ZQSD</kbd> / <kbd>WASD</kbd> / flèches. <b>Visée</b> : la souris. Ton attaque tire en continu vers le curseur (<kbd>C</kbd> passe en visée automatique).</li>
-          <li><b>Sorts</b> : <kbd>Clic droit</kbd> et <kbd>Espace</kbd>, chacun avec sa recharge. <b>Ultime</b> : <kbd>R</kbd>, il se charge en tuant.</li>
-          <li><b>Ton armée</b> : les ennemis vaincus peuvent rejoindre ton camp (anneau vert). <kbd>Clic gauche</kbd> (ou <kbd>F</kbd>) : assaut sur le point visé. <kbd>Maj</kbd> : ralliement autour de toi. Libère des prisonniers et prends des forts pour la grossir.</li>
-          <li>Chaque niveau propose 3 cartes : armes automatiques, passifs, et <b>talents</b> qui transforment tes sorts.</li>
-          <li><b>Évolution</b> : arme au niveau 5 + passif indiqué + 1 cristal (élites, boss).</li>
-          <li><b>Mission</b> : suis les objectifs (flèches dorées), puis abats le boss final. Esquive les cercles et lignes rouges.</li>
+          <li><b>Étoile filante</b> (<kbd>Clic droit</kbd> ou <kbd>E</kbd>, 3 charges) : une comète plante une étoile au point visé. Dès <b>3 étoiles</b>, elles se relient en <b>constellation</b> : ses fils brûlent ce qui les traverse, une pluie d’astres frappe l’intérieur.</li>
+          <li>Une flèche qui <b>traverse une étoile</b> se divise en 3. Vise à travers tes étoiles.</li>
+          <li><b>Pas lunaire</b> (<kbd>Espace</kbd>) : dash invulnérable. <b>Traverse ta constellation</b> pour la faire exploser en <b>supernova</b> (le dash est rendu). <b>Voûte céleste</b> (<kbd>R</kbd>) : 6 étoiles toutes reliées.</li>
+          <li>Chaque niveau propose 3 cartes de <b>ton arbre</b> : Astronome, Archère ou Danseuse. 5 cartes dans une branche débloquent sa <b>légendaire</b>.</li>
+          <li><b>La nuit</b> : chute d’étoiles, lune de sang, hérauts qui dévorent tes étoiles… puis l’arène du <b>Dévoreur d’étoiles</b>. Une supernova déclenchée sur lui le blesse deux fois et demie plus.</li>
           <li>Chaque mission rapporte des <b>runes</b>, même en cas de défaite. Dépense-les au <b>camp</b> ; les défis débloquent armes, missions et difficultés.</li>
         </ul>
       </div>
@@ -437,7 +440,7 @@ const BAL = {
   maxWeapons: 6, maxPassives: 6,
   spellScale: L => 1 + .15 * (L - 1),              // les sorts suivent le niveau du héros
   firstObjective: 20, objectiveGap: 45,            // secondes avant le 1er objectif, puis de horde libre entre deux objectifs
-  bossHp: m => (1 + .12 * m) * 5,                        // les boss grossissent avec la durée de la mission
+  bossHp: m => (1 + .12 * m) * 4,                        // les boss grossissent avec la durée de la mission
   runes: { objective: 15, midBoss: 20, boss: 40, perKills: 150 },
 };
 
@@ -445,19 +448,19 @@ const BAL = {
 const FACTIONS = {
   orcs: { id: 'orcs', name: 'Orcs', title: 'La Horde de Rouille', color: '#d4683f', pitch: 'Un colosse de mêlée qui charge dans le tas et broie tout en tourbillonnant. Soif de sang : chaque ennemi tué le soigne.' },
   nains: { id: 'nains', name: 'Nains', title: 'Les Clans de l’Enclume', color: '#6ea6d6', pitch: 'Un ingénieur blindé qui contrôle le terrain : tourelles posées au curseur, séismes qui étourdissent.' },
-  elfes: { id: 'elfes', name: 'Elfes', title: 'La Cour Sylvestre', color: '#b49af0', pitch: 'Une archère rapide et fragile : roulades d’esquive et volées de flèches. Elle vit de son placement.' },
+  elfes: { id: 'elfes', name: 'Elfes', title: 'La Cour Sylvestre', color: '#b49af0', pitch: 'Elle tisse des constellations sur le champ de bataille : plante des étoiles, relie-les, et fais exploser la nuit en supernova d’un pas de danse.' },
 };
 // start : arme signature (visée à la souris) ; spells : clic droit puis Espace.
 const HEROES = {
-  orcs: { name: 'Grukk', title: 'Chef de guerre', look: 'grukk', hp: 160, speed: 150, armor: 1, regen: .3, magnet: 1, lifeOnKill: .2, start: 'lancer', pool: ['lancer', 'haches', 'totem'], spells: ['charge', 'tourbillon'] },
-  nains: { name: 'Durgan', title: 'Briseur de rocs', look: 'durgan', hp: 180, speed: 136, armor: 2, regen: .2, magnet: 1, start: 'marteau', pool: ['marteau', 'tourelle', 'mines'], spells: ['tourelleR', 'seisme'] },
-  elfes: { name: 'Lyriel', title: 'Rôdeuse lunaire', look: 'lyriel', hp: 125, speed: 168, armor: 0, regen: .4, magnet: 1.3, start: 'arc', pool: ['arc', 'lames', 'ronces'], spells: ['roulade', 'volee'] },
+  orcs: { name: 'Grukk', title: 'Chef de guerre', look: 'grukk', hp: 160, speed: 150, armor: 1, regen: .3, magnet: 1, lifeOnKill: .2, start: 'lancer', pool: ['lancer', 'haches', 'totem'], spells: ['charge', 'tourbillon'], locked: 'Bientôt : la Hache liée. Il lance sa grande hache, la rappelle à travers la horde ou bondit jusqu’à elle.' },
+  nains: { name: 'Durgan', title: 'Briseur de rocs', look: 'durgan', hp: 180, speed: 136, armor: 2, regen: .2, magnet: 1, start: 'marteau', pool: ['marteau', 'tourelle', 'mines'], spells: ['tourelleR', 'seisme'], locked: 'Bientôt : la Forge vivante. Son marteau chauffe à chaque coup ; en surchauffe, il évacue la vapeur en explosion.' },
+  elfes: { name: 'Lyriel', title: 'Tisseuse d’étoiles', look: 'lyriel', hp: 150, speed: 168, armor: 0, regen: .7, magnet: 1.3, start: 'arc', pool: [], spells: ['etoile', 'paslunaire'], kit: 'constellation' },
 };
 const SHARED = ['foudre', 'feu', 'nova', 'meteore'];
 const ULTS = {
   orcs: { name: 'WAAAGH !', icon: '🔥', desc: 'Onde de choc, puis 8 s de furie : armes 60 % plus fortes et 40 % plus rapides, héros plus véloce.' },
   nains: { name: 'Barrage runique', icon: '💣', desc: '30 obus runiques s’abattent autour du curseur.' },
-  elfes: { name: 'Nuit des étoiles', icon: '🌌', desc: 'Pendant 4 s, une pluie d’étoiles frappe la horde et la ralentit de moitié.' },
+  elfes: { name: 'Voûte céleste', icon: '🌌', desc: 'Trois étoiles naissent autour de toi et, pendant 7 s, jusqu’à 6 étoiles se relient toutes entre elles.' },
 };
 
 // ═════════════════════════ Sorts des champions ═════════════════════════
@@ -476,13 +479,61 @@ const SPELLS = {
     talents: { eventail: { name: 'Éventail', desc: 'Tire 10 flèches tout autour à la fin de la roulade.' }, vent: { name: 'Pas du vent', desc: 'Recharge −50 %.' } } },
   volee: { name: 'Volée', icon: '🎯', cd: 8, dmg: 30, radius: 130, desc: 'Une pluie de flèches au curseur. Les ennemis touchés sont marqués : +25 % de dégâts subis.',
     talents: { givre: { name: 'Flèches de givre', desc: 'La volée ralentit fortement la horde.' }, tempete: { name: 'Tempête de flèches', desc: 'Deux fois plus de flèches, plus longtemps.' } } },
+  etoile: { name: 'Étoile filante', icon: '⭐', cd: 2.2, dmg: 0, desc: 'Une comète plante une étoile au point visé. Trois étoiles se relient en constellation : fils d’argent et pluie d’astres.', talents: {} },
+  paslunaire: { name: 'Pas lunaire', icon: '🌙', cd: 4, dmg: 0, desc: 'Dash invulnérable vers le curseur. Traverse ta constellation pour la faire exploser en supernova (le dash est rendu).', talents: {} },
 };
 
 // ═════════════════════════ Missions ═════════════════════════
 // Une mission = des objectifs dans l’ordre, un boss intermédiaire, puis le boss final.
 const MAPS = {
-  cendres: { name: 'Les Marches cendrées', desc: 'Libère des prisonniers, prends un fort cendreux, et lève ta horde contre le Chef de guerre.', ground: 'forest', objectives: ['prisonniers', 'nids', 'fort', 'zone', 'chasse'], mid: { after: 1, type: 'boss2' }, boss: 'boss1' },
-  neant: { name: 'Le Col du Néant', desc: 'Escorte la caravane à travers le col corrompu, jusqu’au Seigneur du Néant.', ground: 'void', objectives: ['escorte', 'prisonniers', 'fort', 'nids', 'zone'], mid: { after: 1, type: 'boss3' }, boss: 'boss4' },
+  cendres: { hidden: true, name: 'Les Marches cendrées', desc: 'Libère des prisonniers, prends un fort cendreux, et lève ta horde contre le Chef de guerre.', ground: 'forest', objectives: ['prisonniers', 'nids', 'fort', 'zone', 'chasse'], mid: { after: 1, type: 'boss2' }, boss: 'boss1' },
+  etoiles: { name: 'La Nuit des étoiles filantes', desc: 'Une nuit d’événements célestes, jusqu’à l’arène du Dévoreur d’étoiles.', ground: 'forest', events: [[70, 'chute'], [150, 'lune'], [225, 'herauts'], [290, 'chute'], [360, 'boss']], boss: 'devoreur', objectives: [] },
+  neant: { hidden: true, name: 'Le Col du Néant', desc: 'Escorte la caravane à travers le col corrompu, jusqu’au Seigneur du Néant.', ground: 'void', objectives: ['escorte', 'prisonniers', 'fort', 'nids', 'zone'], mid: { after: 1, type: 'boss3' }, boss: 'boss4' },
+};
+
+// ═════════════════════════ Lyriel, Tisseuse d’étoiles : réglages ═════════════════════════
+// Clic droit : Étoile filante (plante une étoile). Dès 3 étoiles : constellation (fils + pluie d’astres).
+// Espace : Pas lunaire ; traverser sa constellation la fait exploser en supernova.
+const STAR = {
+  charges: 3, cd: 2.2, range: 440, life: 9, max: 3,          // étoiles : charges, recharge, portée, durée de vie, nombre sur le terrain
+  impact: 22, rain: 9, line: 7, tick: .3,                    // dégâts de base : impact de la comète, pluie (par tick), fils (par tick)
+  nova: 46, novaR: 85, dashCd: 4, dashLen: 270,              // supernova et Pas lunaire
+  arrow: { dmg: 12, cd: .55, n: 2, pierce: 2, speed: 760 },  // flèches lunaires
+};
+// Arbre de talents : trois branches ; la carte légendaire se débloque après 5 cartes de la branche.
+const TREE = {
+  astro: { name: 'Astronome', color: '#9fc8ff', cards: {
+    ourse: { name: 'Grande Ourse', icon: '✨', max: 2, desc: '+1 étoile sur le terrain : tes constellations gagnent un sommet.' },
+    fils: { name: 'Fils d’argent', icon: '🕸️', max: 2, desc: 'Les fils de la constellation font +60 % de dégâts et ralentissent.' },
+    poussiere: { name: 'Poussière d’étoiles', icon: '🌠', max: 3, desc: 'La pluie d’astres fait +40 % de dégâts.' },
+    tenaces: { name: 'Étoiles tenaces', icon: '⏳', max: 2, desc: 'Les étoiles durent 50 % plus longtemps.' },
+    gravite: { name: 'Gravité', icon: '🌀', max: 1, desc: 'Les constellations aspirent la horde vers leur cœur.' },
+    zodiaque: { name: 'Zodiaque', icon: '♌', legend: true, desc: 'Une constellation complète explose seule en supernova toutes les 5 s, sans disparaître.' },
+  } },
+  arch: { name: 'Archère', color: '#d8f0b8', cards: {
+    volee: { name: 'Volée', icon: '🏹', max: 3, desc: '+1 flèche par tir.' },
+    prisme: { name: 'Prisme', icon: '🔷', max: 2, desc: 'Une flèche qui traverse une étoile se divise en 5 au lieu de 3, puis en 7.' },
+    lunaires: { name: 'Flèches lunaires', icon: '🌙', max: 3, desc: '+2 perforations et +20 % de dégâts.' },
+    rapide: { name: 'Tir rapide', icon: '💨', max: 3, desc: '+15 % de cadence de tir.' },
+    comete: { name: 'Comète', icon: '☄️', max: 1, desc: 'Une flèche sur 5 est une comète qui plante une étoile là où elle s’arrête.' },
+    argent: { name: 'Pluie d’argent', icon: '🌧️', legend: true, desc: 'Les flèches qui croisent un fil de constellation se dédoublent.' },
+  } },
+  danse: { name: 'Danseuse', color: '#cbb8ff', cards: {
+    pas: { name: 'Pas de lune', icon: '👣', max: 2, desc: '+1 charge de Pas lunaire.' },
+    sillage: { name: 'Sillage étoilé', icon: '💫', max: 1, desc: 'Le Pas lunaire plante une étoile à ton point de départ.' },
+    eclipse: { name: 'Éclipse', icon: '🌑', max: 1, desc: 'Après un Pas lunaire, la horde te perd de vue 1,2 s et ta flèche suivante est critique.' },
+    nova: { name: 'Supernova', icon: '💥', max: 3, desc: 'Supernova : +35 % de dégâts et de rayon.' },
+    grace: { name: 'Grâce lunaire', icon: '🦌', max: 3, desc: '+10 % de vitesse et +15 PV max.' },
+    berger: { name: 'Étoile du berger', icon: '⭐', legend: true, desc: 'Chaque supernova recharge toutes tes Étoiles filantes et te soigne de 15 %.' },
+  } },
+};
+const LEGEND_NEED = 5;
+// Mission « La Nuit des étoiles filantes » : une chronologie d’événements, puis le boss dans son arène.
+const EVENTS = {
+  chute: { name: 'Chute d’étoiles', desc: 'Des étoiles tombent du ciel : ramasse leurs éclats pour recharger tes Étoiles filantes.' },
+  lune: { name: 'Lune de sang', desc: 'La horde enrage : plus rapide, plus nombreuse, mais chaque kill vaut double XP.' },
+  herauts: { name: 'Les Hérauts du Dévoreur', desc: 'Trois hérauts dévorent tes étoiles. Abats-les avant qu’ils ne grandissent.' },
+  boss: { name: 'L’Éclipse', desc: 'Le Dévoreur d’étoiles descend. Il mange tes étoiles… mais une supernova sur lui le blesse deux fois et demie plus.' },
 };
 const DIFFS = {
   normal: { name: 'Normal', hp: 1, dmg: 1, runes: 1 },
@@ -504,6 +555,7 @@ const ARMY = {
   orcs: { mode: 'soumission', chance: .24, name: 'Soumission', desc: 'Un quart des ennemis achevés se soumettent et rejoignent ta horde.' },
   nains: { mode: 'golem', every: 9, name: 'Forge de golems', desc: 'Tous les 9 kills, un golem runique se dresse : rare, mais increvable.' },
   elfes: { mode: 'envoutement', chance: .2, hp: .85, spd: 1.35, spirit: true, name: 'Envoûtement', desc: 'Les ennemis envoûtés reviennent en esprits : rapides mais fragiles.' },
+  on: false,                                       // v0.10 : l’armée est désactivée (jugée sans intérêt au playtest)
   cap: 50, aggro: 170, leash: 380, orderT: 6, rallyCd: 8,
   hpMul: 2.6, dmg: m => 3 + 1.3 * m,
   color: '#6fe08a',
@@ -612,6 +664,8 @@ const ENEMIES = {
   boss1: { name: 'Chef de guerre cendré', boss: true, hp: 4500, spd: 48, dmg: 26, xp: 80, r: 20, col: '#8a2a3a', ai: 'charge' },
   boss3: { name: 'Golem de cendres', boss: true, hp: 8000, spd: 40, dmg: 32, xp: 100, r: 24, armor: 4, col: '#5b4a44', ai: 'slam', regen: .004 },
   boss4: { name: 'Seigneur du Néant', boss: true, hp: 10000, spd: 46, dmg: 40, xp: 150, r: 24, col: '#4a1d66', ai: 'void' },
+  devoreur: { name: 'Le Dévoreur d’étoiles', boss: true, hp: 42000, spd: 58, dmg: 30, xp: 150, r: 28, col: '#2a1640', ai: 'devoreur', starEater: true },
+  heraut: { name: 'Héraut du Dévoreur', hp: 45, spd: 66, dmg: 7, xp: 6, r: 12, col: '#5a3a8a', starEater: true },
   // Ennemis d’objectif : le nid ne bouge pas, le porteur fuit le héros.
   nid: { name: 'Nid de cendres', hp: 650, spd: 0, dmg: 6, xp: 20, r: 26, col: '#6a4a6a', static: true },
   cage: { name: 'Cage de prisonniers', hp: 900, spd: 0, dmg: 0, xp: 10, r: 30, col: '#8a5a2e', static: true, cage: true },
@@ -775,6 +829,8 @@ const LOOKS = {
   boss2: { px: 3.3, skin: SK.bone, armor: '#ddd3b8', ribs: true, arms: SK.bone, pants: '#bcb196', boots: '#8a826c', trim: '#d9a64a', crown: true, skull: true, weapon: 'sword', cape: '#2a2a3a', eye: '#ff3a2a' },
   boss3: { px: 3.6, bulky: true, skin: '#6e6660', armor: '#5b524c', arms: '#6e6660', pants: '#4a423c', boots: '#3a332e', trim: '#ff8a3a', cracks: true, weapon: 'none', eye: '#ffb347' },
   boss4: { px: 3.4, tall: true, skin: '#c9c2d8', robe: '#2a1640', armor: '#3a1d5c', pants: '#2a1640', boots: '#1a1028', trim: '#c58cff', hood: '#1e1030', crown: true, weapon: 'staff', orb: '#d58cff', eye: '#d58cff' },
+  devoreur: { px: 4, tall: true, skin: '#1e1630', robe: '#0d0818', armor: '#241638', pants: '#0d0818', boots: '#08050e', trim: '#9fc8ff', hood: '#0a0612', crown: true, weapon: 'staff', orb: '#9fc8ff', eye: '#cfe6ff' },
+  heraut: { px: 2.2, skin: '#3a2a50', armor: '#1e1430', pants: '#160e24', boots: '#0a0612', trim: '#9fc8ff', hood: '#120a1e', weapon: 'claws', eye: '#9fc8ff' },
   grukk: { px: 2.6, bulky: true, skin: SK.orc, armor: '#5a2a18', arms: SK.orc, pants: '#3a2414', boots: '#1e140c', trim: '#d4683f', helm: '#4a3a30', horns: '#e6dcc0', tusks: true, weapon: 'bigaxe', cape: '#d4683f', eye: '#ffcf3a' },
   durgan: { px: 2.6, short: true, skin: SK.dwarf, armor: '#2f5f8a', pants: '#4a3a2a', boots: '#2a2018', trim: '#e2b443', helm: '#e2b443', wings: true, beard: '#e8e6e0', weapon: 'hammer', shield: '#6ea6d6', cape: '#2f5f8a', eye: '#2a1a10' },
   lyriel: { px: 2.6, tall: true, skin: SK.elf, armor: '#3e6a4a', pants: '#2e4a34', boots: '#2a2a20', trim: '#f0e0a0', hood: '#2e5a3a', ears: true, weapon: 'bow', cape: '#4f8a5a', eye: '#2a4a2a' },
@@ -823,7 +879,7 @@ const sprC = (key, build) => cached(key, () => { const P = build(); return { c: 
 
 // ═════════════════════════ État de la run ═════════════════════════
 let G = null;
-let selFac = 'orcs', selMap = 'cendres', selDiff = 'normal';
+let selFac = 'elfes', selMap = 'etoiles', selDiff = 'normal';
 let lastPointer = 'mouse';
 
 // ═════════════════════════ Progression sauvegardée (camp, défis) ═════════════════════════
@@ -835,7 +891,7 @@ let META = (() => {
 })();
 function saveMeta() { try { localStorage.setItem(META_KEY, JSON.stringify(META)); } catch (e) { /* stockage indisponible */ } }
 const unlocked = id => !!META.unlocked[id];
-const mapOpen = id => id === 'cendres' || unlocked(id);
+const mapOpen = id => id === 'etoiles' || id === 'cendres' || unlocked(id);
 const diffOpen = d => d === 'normal' || unlocked(d);
 function checkChallenges() { const fresh = []; for (const c of CHALLENGES) if (!META.unlocked[c.id] && c.test(META)) { META.unlocked[c.id] = true; fresh.push(c); } return fresh; }
 
@@ -849,6 +905,8 @@ function newRun(fac, map = selMap, diff = selDiff) {
     spells: H.spells.map(id => ({ id, t: 0, tal: {}, ammo: 1 })), spellW: { id: 'sorts', dmg: 0, kills: 0 }, dash: null, spin: null, timers: [], aimAt: null,
     arcs: [], spikes: [], ghosts: [], corpses: [], flashes: [], kick: { x: 0, y: 0 }, empower: 0,
     allies: [], army: { ups: {}, gauge: 0, recruits: 0, lost: 0 }, armyW: { id: 'armee', dmg: 0, kills: 0 }, order: null, rallyT: 0, rallyCd: 0,
+    stars: [], hull: [], comets: [], starfalls: [], wells: [], starTick: 0, vault: 0, hide: 0, critNext: false, zodiac: 4,
+    kit: { tal: {}, branch: { astro: 0, arch: 0, danse: 0 }, arrows: 0 }, event: null, evIdx: 0, arena: null, eclipse: false, bloodMoon: false,
     mis: { i: 0, phase: 'wait', t: BAL.firstObjective, obj: null, done: 0, runes: 0 }, cart: null,
     enemies: [], projs: [], eprojs: [], turrets: [], booms: [], mines: [], zones: [], meteors: [], drops: [], tele: [],
     fx: [], parts: [], texts: [], decals: [],
@@ -984,7 +1042,7 @@ function updateSpawns(dt) {
   if (surge && !G.surgeOn) { banner('La marée monte !', '', 'surge'); SFX.play('warn'); }
   G.surgeOn = surge;
   // Tenir la rune attire la horde : le débit grimpe tant que le héros est dans le cercle.
-  let rate = BAL.rate(m) * (surge ? BAL.surgeMul : 1) * (o && o.type === 'zone' && o.inside ? 1.5 : 1) * (G.mis.phase === 'boss' ? 1.2 : 1);
+  let rate = BAL.rate(m) * (surge ? BAL.surgeMul : 1) * (o && o.type === 'zone' && o.inside ? 1.5 : 1) * (G.mis.phase === 'boss' ? 1.2 : 1) * (G.bloodMoon ? 1.6 : 1) * (G.arena ? .35 : 1);
   G.spawnAcc += rate * dt;
   while (G.spawnAcc >= 1) {
     G.spawnAcc -= 1;
@@ -1003,7 +1061,7 @@ function updateSpawns(dt) {
     }
   }
   const enc = BAL.encircle[G.encIdx];
-  if (enc !== undefined && G.t >= enc) { G.encIdx++; encircle(); }
+  if (enc !== undefined && G.t >= enc) { G.encIdx++; if (!G.arena) encircle(); }
 }
 // Encerclement : un anneau d’ennemis se referme sur le héros. Il faut trouver la faille.
 function encircle() {
@@ -1025,7 +1083,7 @@ function updateEnemies(dt) {
     // Les ennemis trop loin réapparaissent devant le héros (la pression ne retombe jamais).
     if (e.T.static) { updateNest(e, dt); continue; }
     if (!e.boss && !e.T.flee && !e.guard && d2(e.x, e.y, h.x, h.y) > far * far) { const p = spawnPoint(); e.x = p.x; e.y = p.y; }
-    let spd = e.speed * (e.slowT > 0 ? 1 - e.slowP : 1) * (G.starfall > 0 ? .5 : 1);
+    let spd = e.speed * (e.slowT > 0 ? 1 - e.slowP : 1) * (G.starfall > 0 ? .5 : 1) * (G.bloodMoon ? 1.35 : 1);
     if (e.slowT > 0) e.slowT -= dt;
     if (e.mark > 0) e.mark -= dt;
     let mx = e.kx * dt, my = e.ky * dt;
@@ -1036,7 +1094,10 @@ function updateEnemies(dt) {
     if (G.allies.length && !e.T.flee) { const a = nearestAlly(e.x, e.y, 140); if (a && d2(a.x, a.y, e.x, e.y) < d2(tg.x, tg.y, e.x, e.y)) tg = a; }
     // Gardes (cage, fort) : ils ne quittent pas leur poste pour te poursuivre.
     if (e.guard && d2(tg.x, tg.y, e.guard.x, e.guard.y) > 320 * 320) { tg = e.post || (e.post = { x: e.guard.x + rand(-90, 90), y: e.guard.y + rand(-70, 70) }); if (d2(tg.x, tg.y, e.x, e.y) < 100) spd = 0; }
+    // Hérauts : ils foncent sur tes étoiles pour les dévorer.
+    if (e.T.starEater && !e.boss && G.stars.length) { const s = nearestStar(e.x, e.y, 450); if (s) tg = s; }
     const dx = tg.x - e.x, dy = tg.y - e.y, dd = Math.hypot(dx, dy) || 1, hd = tg === h ? dd : dist(e.x, e.y, h.x, h.y);
+    if (tg.life !== undefined && tg.pop !== undefined && dd < e.r + 14) eatStar(e, tg);
     if (e.boss) { const r = bossAI(e, dt, dx, dy, dd); if (r) { mx += r.x; my += r.y; spd = 0; } }
     if (e.T.ranged && !e.boss && dd < e.T.ranged.range) {
       e.shotT -= dt;
@@ -1054,7 +1115,7 @@ function updateEnemies(dt) {
     e.x = clamp(e.x + mx, 10, BAL.world.w - 10); e.y = clamp(e.y + my, 10, BAL.world.h - 10);
     if (Math.abs(dx) > 2) e.face = Math.sign(dx);
     e.moving = Math.abs(mx) + Math.abs(my) > .05;
-    if (hd < e.r + BAL.heroR && e.atkCd <= 0) { e.atkCd = .8; e.atk = .22; hurtHero(e.T.dmg * BAL.dmg(G.m) * (e.elite ? 1.6 : 1) * (e.charging ? 1.6 : 1)); }
+    if (hd < e.r + BAL.heroR && e.atkCd <= 0 && !(G.hide > 0)) { e.atkCd = .8; e.atk = .22; hurtHero(e.T.dmg * BAL.dmg(G.m) * (e.elite ? 1.6 : 1) * (e.charging ? 1.6 : 1)); }
     else if (tg === G.cart && dd < e.r + 26 && e.atkCd <= 0) { e.atkCd = .8; e.atk = .22; hitCart(e.T.dmg * BAL.dmg(G.m) * G.D.dmg); }
     else if (tg.ally && dd < e.r + tg.r + 3 && e.atkCd <= 0) { e.atkCd = .8; e.atk = .22; hitAlly(tg, e.T.dmg * BAL.dmg(G.m) * G.D.dmg * (e.elite ? 1.6 : 1) * (e.boss ? 2 : 1)); }
     if (e.atk) e.atk = Math.max(0, e.atk - dt);
@@ -1086,6 +1147,7 @@ function fleeMove(e, dx, dy, dd, spd, dt) {
 // Attaques de boss télégraphiées : on doit pouvoir les voir venir et les esquiver.
 function bossAI(e, dt, dx, dy, dd) {
   const ai = e.T.ai;
+  if (ai === 'devoreur') return devoreurAI(e, dt, dx, dy, dd);
   if (ai === 'summon') { e.aiT -= dt; if (e.aiT <= 0) { e.aiT = 5; for (let i = 0; i < 4; i++) spawnEnemy('coureur', { x: e.x + rand(-40, 40), y: e.y + rand(-40, 40) }); ring(e.x, e.y, 60, '#c58cff', .4); } return null; }
   if (ai === 'charge') {
     if (e.state === 'chase') { e.aiT -= dt; if (e.aiT <= 0 && dd < 520) { e.state = 'wind'; e.aiT = .85; e.cdx = dx / dd; e.cdy = dy / dd; G.tele.push({ k: 'line', e, x: e.x, y: e.y, dx: e.cdx, dy: e.cdy, len: 400, w: e.r * 2.2, t: 0, T: .85 }); SFX.play('warn'); } return null; }
@@ -1149,6 +1211,8 @@ function dmgEnemy(e, amount, o = {}) {
   if (e.stun > 0 && !e.boss) dmg *= 1.3;
   if (e.mark > 0) dmg *= 1.25;
   if (o.mark) e.mark = Math.max(e.mark || 0, o.mark);
+  // Supernova sur un mangeur d’étoiles : triple dégâts, et il est aveuglé.
+  if (o.nova && e.T.starEater) { dmg *= 2.5; if (e.boss && !(e.blind > 0)) { e.blind = 1.4; addText(e.x, e.y - 90, 'Aveuglé !', '#e8f2ff', 22, true); } }
   let crit = false;
   if (o.crit && Math.random() < o.crit) { dmg *= 2.5; crit = true; }
   e.hp -= dmg; e.flash = .07; G.stats.dmg += dmg;
@@ -1165,7 +1229,7 @@ function killEnemy(e, w) {
   if (w) w.kills++;
   const T = e.T, xp = T.xp * (e.elite ? BAL.eliteXp : 1);
   if (G.H.lifeOnKill && !G.deadT) G.hero.hp = Math.min(G.hero.maxHp, G.hero.hp + G.H.lifeOnKill); // Soif de sang (orcs)
-  drop(e.x, e.y, 'xp', xp);
+  drop(e.x, e.y, 'xp', xp * (G.bloodMoon ? 2 : 1));
   if (Math.random() < BAL.coinChance || e.elite) drop(e.x + rand(-8, 8), e.y + rand(-8, 8), 'gold', e.elite ? 15 : Math.ceil(rand(1, 3)));
   if (e.elite) { drop(e.x + 14, e.y, 'chest', 1); drop(e.x - 14, e.y, 'cr', 1); }
   if (e.boss) { drop(e.x, e.y + 20, 'chest', 1); for (let i = 0; i < 3; i++) drop(e.x + rand(-30, 30), e.y + rand(-30, 30), 'cr', 1); }
@@ -1226,10 +1290,11 @@ function collect(d) {
   else if (d.type === 'food') { G.hero.hp = Math.min(G.hero.maxHp, G.hero.hp + d.v); addText(G.hero.x, G.hero.y - 60, '+' + d.v, '#9be38a', 18, true); SFX.play('heal'); }
   else if (d.type === 'vac') { for (const o of G.drops) if (o.type === 'xp' || o.type === 'gold') o.mag = true; toast('Orbe d’attraction : tout le butin accourt !', 'gold'); SFX.play('chest'); }
   else if (d.type === 'chest') openChest();
+  else if (d.type === 'astre') { const sp = G.spells[0]; if (sp) { sp.ammo = Math.min(spellMax(sp), sp.ammo + 1); if (sp.ammo >= spellMax(sp)) sp.t = 0; } G.ult.v = Math.min(G.ult.need, G.ult.v + 6); sparkle(G.hero.x, G.hero.y - 30, '#cfe6ff', 8); SFX.play('ready'); }
 }
 // Coffre : une amélioration gratuite tirée au hasard, plus de l’or.
 function openChest() {
-  const opts = offerPool().filter(o => o.kind === 'up' || o.kind === 'pass');
+  const opts = offerPool().filter(o => o.kind === 'up' || o.kind === 'pass' || (o.kind === 'kit' && !TREE[o.b].cards[o.id].legend));
   const o = opts.length ? pick(opts) : null;
   const g = 25 + Math.round(10 * G.m);
   G.gold += g;
@@ -1245,7 +1310,7 @@ function addXp(v) {
 function updateWeapons(dt) {
   const h = G.hero;
   for (const w of G.weapons) {
-    const W = WEAPONS[w.id], s = wstats(w);
+    const W = WEAPONS[w.id], s = w.sig && G.H.kit ? kitArrow(wstats(w)) : wstats(w);
     w.t -= dt;
     switch (W.kind) {
       case 'orbit': {
@@ -1266,6 +1331,8 @@ function updateWeapons(dt) {
           const emp = G.empower > 0; if (emp) { G.empower--; SFX.play('roll'); }
           w.t = s.cd; SFX.play('shoot');
           for (let i = 0; i < s.n; i++) { const a = a0 + (i - (s.n - 1) / 2) * (s.aim ? .09 : s.spread); G.projs.push({ x: h.x, y: h.y - 20, vx: Math.cos(a) * s.speed, vy: Math.sin(a) * s.speed, dmg: s.dmg * (emp ? 2.5 : 1), pierce: emp ? 99 : s.pierce, life: s.life * (emp ? 1.4 : 1), size: s.size * (emp ? 1.9 : 1), big: emp, glow: emp ? '#cbb8ff' : null, shape: s.shape, w, hit: new Set(), spin: 0, crit: s.crit || 0, evo: w.evo }); }
+          // Lyriel : flèche critique après une Éclipse, comète une fois sur 5 (talent Comète).
+          if (G.H.kit) { const fresh = G.projs.slice(-s.n); if (G.critNext) { G.critNext = false; for (const p of fresh) { p.crit = 1; p.glow = '#ffffff'; } } G.kit.arrows++; if (tl('comete') && G.kit.arrows % 5 === 0) { const p = fresh[0]; p.comet = true; p.big = true; p.glow = '#cfe6ff'; p.pierce = 0; p.life = Math.min(p.life, Math.hypot(aimPoint().x - h.x, aimPoint().y - h.y) / s.speed); } }
           break;
         }
         const ts = nearest(h.x, h.y, 520, s.aim ? s.n : 1);
@@ -1361,6 +1428,7 @@ function updateProjs(dt) {
   for (const p of G.projs) {
     p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; p.spin += dt * 18;
     if (p.evo && Math.random() < .5 && G.parts.length < 800) G.parts.push({ x: p.x, y: p.y, vx: 0, vy: 0, t: 0, T: .2, c: '#ffd76a', r: 2, g: 0 });
+    if (G.stars.length) refract(p);
     forNear(p.x, p.y + 12, p.size, e => {
       if (p.life <= 0 || p.hit.has(e.id)) return;
       p.hit.add(e.id); dmgEnemy(e, p.dmg, { w: p.w, kb: 4, fx: p.x - p.vx, fy: p.y - p.vy, crit: p.crit });
@@ -1369,6 +1437,7 @@ function updateProjs(dt) {
       if (--p.pierce < 0) p.life = 0;
     });
   }
+  for (const p of G.projs) if (p.comet && p.life <= 0 && !p.planted) { p.planted = true; plantStar(p.x, p.y + 10); }
   G.projs = G.projs.filter(p => p.life > 0);
   // Tourelles et totems
   for (const t of G.turrets) {
@@ -1420,6 +1489,7 @@ function updateProjs(dt) {
       forNear(m.x, m.y, m.r, e => dmgEnemy(e, m.dmg, { w: m.w, kb: 8, fx: m.x, fy: m.y, magic: true, burn: m.kind === 'rock' ? m.dmg * .15 : 0 }));
       boom(m.x, m.y, m.r, m.kind === 'star' ? '#cfe6ff' : '#ff9a4a'); puff(m.x, m.y - 10, '#ffb347', 10); shake(m.big ? 6 : 2); SFX.play('boom');
       if (m.kind !== 'star') G.decals.push({ x: m.x, y: m.y, t: 0, T: 6, s: m.r / 40, crater: true });
+      if (m.kind === 'astre') drop(m.x, m.y, 'astre', 1);
     }
   }
   G.meteors = G.meteors.filter(m => !m.done);
@@ -1445,7 +1515,8 @@ function castUlt() {
     // Les obus tombent autour du point visé, en priorité sur les ennemis qui s’y trouvent.
     const c = aimPoint(), R = 260, pool = G.enemies.filter(e => !e.dead && d2(e.x, e.y, c.x, c.y) < R * R);
     for (let i = 0; i < 30; i++) { const e = pool.length ? pick(pool) : null; const a = rand(0, TAU), r = R * Math.sqrt(Math.random()), x = e ? e.x : c.x + Math.cos(a) * r, y = e ? e.y : c.y + Math.sin(a) * r * .8; G.meteors.push({ x: x + rand(-20, 20), y: y + rand(-20, 20), t: -i * .07, T: .5, r: 75, dmg: 70 * ts, kind: 'rock', big: true }); }
-  } else { G.starfall = 4; G.starT = 0; G.starDmg = 80 * ts; }
+  } else if (G.H.kit) castVault();
+  else { G.starfall = 4; G.starT = 0; G.starDmg = 80 * ts; }
 }
 function updateUlt(dt) {
   G.waaagh = Math.max(0, G.waaagh - dt);
@@ -1465,7 +1536,7 @@ function updateUlt(dt) {
 // Chaque sort a des charges (1, ou 2 avec Ruée sauvage) qui se rechargent une par une.
 const sdmg = base => base * BAL.spellScale(G.level) * G.mods.might;
 const hasTal = (sp, k) => !!sp.tal[k];
-const spellMax = sp => hasTal(sp, 'ruee') ? 2 : 1;
+const spellMax = sp => sp.id === 'etoile' ? STAR.charges : sp.id === 'paslunaire' ? 1 + tl('pas') : hasTal(sp, 'ruee') ? 2 : 1;
 function spellCd(sp) {
   let cd = SPELLS[sp.id].cd * G.mods.spellCd;
   if (hasTal(sp, 'vent')) cd *= .5;
@@ -1522,6 +1593,13 @@ function castSpell(i) {
       G.decals.push({ x: x0, y: y0, x1: x0 + dx * len, y1: y0 + dy * len, t: 0, T: 7, crack: true, w: wid * .5 });
       kick(dx, dy, 4); SFX.play('quake'); shake(5); break;
     }
+    case 'etoile': { const c = at(STAR.range); shootStar(c.x, c.y); break; }
+    case 'paslunaire': {
+      const len = Math.max(120, Math.min(dd, STAR.dashLen));
+      if (tl('sillage')) plantStar(h.x, h.y);
+      G.dash = { dx, dy, t: len / 1050, speed: 1050, kind: 'lune', crossed: false };
+      G.inv = Math.max(G.inv, .35); SFX.play('roll'); break;
+    }
     case 'roulade':
       G.dash = { dx, dy, t: .22, speed: 820, kind: 'roll', sp, fan: hasTal(sp, 'eventail') };
       G.inv = Math.max(G.inv, .45); G.empower = 2; SFX.play('roll'); break;
@@ -1554,6 +1632,7 @@ function updateDash(dt) {
   // Images rémanentes
   d.ghost = (d.ghost || 0) - dt;
   if (d.ghost <= 0) { d.ghost = .035; G.ghosts.push({ x: h.x, y: h.y, face: h.face, t: 0, T: .3, c: d.kind === 'charge' ? '#ff8a3a' : '#cbb8ff' }); }
+  if (d.kind === 'lune' && G.hull.length >= 3 && inPoly(h.x, h.y, G.hull)) d.crossed = true;
   if (d.kind === 'charge') {
     forNear(h.x, h.y - 10, 38, e => { if (d.hit.has(e.id)) return; d.hit.add(e.id); dmgEnemy(e, d.dmg, { w: G.spellW, kb: 16, fx: h.x - d.dx * 40, fy: h.y - d.dy * 40, stun: .5 }); if (e.dead) d.kills++; });
     d.trail -= dt;
@@ -1568,6 +1647,7 @@ function updateDash(dt) {
       blast(h.x, h.y, 100, '#ff9b3d'); shake(7); hitstop(.06); SFX.play('slam');
       if (d.kills > 0 && d.sp.t > 0) { d.sp.t *= .4; addText(h.x, h.y - 70, 'Sauvagerie !', '#ff9b3d', 20, true); }
     } else sparkle(h.x, h.y - 20, '#cbb8ff', 12);
+    if (d.kind === 'lune') { if (d.crossed) supernova(true); if (tl('eclipse')) { G.hide = 1.2; G.critNext = true; } }
     G.dash = null;
   }
 }
@@ -1625,6 +1705,7 @@ function placeAway(minD, maxD, avoid = []) {
 function updateMission(dt) {
   const ms = G.mis;
   if (!G.started || G.finalDown) return;
+  if (G.M.events) { updateEvents(dt); return; }
   if (ms.phase === 'wait') { ms.t -= dt; if (ms.t <= 0) startObjective(); return; }
   if (ms.phase === 'obj') { updateObjective(ms.obj, dt); if (ms.obj.done) completeObjective(); }
 }
@@ -1704,6 +1785,7 @@ function completeObjective() {
 }
 // Cibles d’objectif, pour les flèches au bord de l’écran.
 function objectiveTargets() {
+  if (G.M.events) { const ev = G.event; return ev && ev.k === 'herauts' ? ev.list.filter(e => !e.dead) : []; }
   const o = G.mis.obj, out = [];
   if (!o) return out;
   if (o.type === 'nids') for (const e of o.list) { if (!e.dead) out.push(e); }
@@ -1736,6 +1818,7 @@ function recruit(type, x, y, o = {}) {
 }
 // Appelé à chaque kill : l’ennemi rejoint-il l’armée ?
 function tryConvert(e) {
+  if (!ARMY.on) return false;
   if (e.T.static || e.T.flee || e.final || e.guardCapt) return false;
   const F = ARMY[G.fac], fer = G.army.ups.ferveur || 0;
   if (e.boss) { // Le boss intermédiaire vaincu devient ton général.
@@ -1778,12 +1861,14 @@ function hitAlly(a, d) {
 }
 // Ordres
 function commandArmy(x, y) {
+  if (!ARMY.on) return;
   if (!G || !running() || !G.allies.length) return;
   G.order = { x, y, t: ARMY.orderT }; G.rallyT = 0; G.started = true;
   ring(x, y, 50, ARMY.color, .5); SFX.play('charge');
   if (G.allies.length) addText(G.hero.x, G.hero.y - 64, 'À l’assaut !', ARMY.color, 16, true);
 }
 function rallyArmy() {
+  if (!ARMY.on) return;
   if (!G || !running()) return;
   if (G.rallyCd > 0) { SFX.play('deny'); return; }
   G.order = null; G.rallyT = 3; G.rallyCd = ARMY.rallyCd; G.started = true;
@@ -1863,10 +1948,229 @@ function drawCage(e, t) {
   ctx.strokeStyle = hexA('#ffd76a', .6 + .3 * Math.sin(t * 5)); ctx.lineWidth = 2.5; ellipse(x, y + 6, 54, 20); ctx.stroke();
   hpBar(x, y - 74, 52, e.hp / e.maxHp, '#e8b878');
 }
+// ═════════════════════════ Lyriel : étoiles et constellations ═════════════════════════
+const tl = k => G.kit.tal[k] || 0;                        // niveau d’un talent de l’arbre
+const starMax = () => (G.vault > 0 ? 6 : STAR.max + tl('ourse'));
+const starLife = () => STAR.life * (1 + .5 * tl('tenaces')) * G.mods.dur;
+const kdmg = base => base * BAL.spellScale(G.level) * G.mods.might;
+// Flèches lunaires : stats calculées depuis l’arbre (plus d’armes génériques).
+function kitArrow(s) {
+  const A = STAR.arrow;
+  return { ...s, dmg: A.dmg * (1 + .2 * tl('lunaires')) * (1 + .11 * (G.level - 1)) * G.mods.might, cd: Math.max(.18, A.cd / (1 + .15 * tl('rapide')) * G.mods.cd), n: A.n + tl('volee'), pierce: A.pierce + 2 * tl('lunaires'), speed: A.speed, aim: true, size: 8, life: 1 };
+}
+// Comète de l’Étoile filante : vole jusqu’au point visé, frappe, puis l’étoile naît.
+function shootStar(x, y) {
+  const h = G.hero;
+  G.comets.push({ x0: h.x, y0: h.y - 24, x, y, t: 0, T: .22 });
+  SFX.play('throw');
+}
+function plantStar(x, y, free) {
+  x = clamp(x, 20, BAL.world.w - 20); y = clamp(y, 20, BAL.world.h - 20);
+  G.stars.push({ x, y, t: 0, life: starLife(), id: G.nid++, pop: .3, free });
+  while (G.stars.length > starMax()) G.stars.shift();
+  forNear(x, y, 50, e => dmgEnemy(e, kdmg(STAR.impact), { w: G.spellW, magic: true, kb: 4, fx: x, fy: y }));
+  ring(x, y, 46, '#cfe6ff', .35); sparkle(x, y - 6, '#cfe6ff', 6); addLight(x, y, 160, '#cfe6ff', .8, .3);
+  SFX.play('ready');
+}
+// Constellation = enveloppe convexe des étoiles (au moins 3).
+function hull(pts) {
+  if (pts.length < 3) return [];
+  const p = pts.slice().sort((a, b) => a.x - b.x || a.y - b.y), cr = (o, a, b) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x), lo = [], up = [];
+  for (const q of p) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q); }
+  for (let i = p.length - 1; i >= 0; i--) { const q = p[i]; while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q); }
+  return lo.slice(0, -1).concat(up.slice(0, -1));
+}
+function inPoly(x, y, P) { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const a = P[i], b = P[j]; if ((a.y > y) !== (b.y > y) && x < (b.x - a.x) * (y - a.y) / (b.y - a.y) + a.x) c = !c; } return c; }
+function segDist2(px, py, a, b) { const dx = b.x - a.x, dy = b.y - a.y, l = dx * dx + dy * dy || 1, k = clamp(((px - a.x) * dx + (py - a.y) * dy) / l, 0, 1); return d2(px, py, a.x + dx * k, a.y + dy * k); }
+function polyArea(P) { let s = 0; for (let i = 0, j = P.length - 1; i < P.length; j = i++) s += (P[j].x + P[i].x) * (P[j].y - P[i].y); return Math.abs(s / 2); }
+// Fils de la constellation : l’enveloppe, ou tous les liens pendant la Voûte céleste.
+function starLinks() {
+  const S = G.stars, out = [];
+  if (S.length < 3) return out;
+  if (G.vault > 0) { for (let i = 0; i < S.length; i++) for (let j = i + 1; j < S.length; j++) out.push([S[i], S[j]]); return out; }
+  const H = G.hull; for (let i = 0; i < H.length; i++) out.push([H[i], H[(i + 1) % H.length]]);
+  return out;
+}
+function supernova(byDash) {
+  const S = G.stars; if (!S.length) return;
+  const k = 1 + .35 * tl('nova'), H = G.hull, area = H.length >= 3 ? polyArea(H) : 0, cx = S.reduce((a, s) => a + s.x, 0) / S.length, cy = S.reduce((a, s) => a + s.y, 0) / S.length;
+  for (const s of S) { forNear(s.x, s.y, STAR.novaR * k, e => dmgEnemy(e, kdmg(STAR.nova) * k, { w: G.spellW, magic: true, kb: 10, fx: s.x, fy: s.y, stun: .5, nova: byDash })); blast(s.x, s.y, STAR.novaR * k, '#cfe6ff'); }
+  if (H.length >= 3) { for (const e of G.enemies) if (!e.dead && inPoly(e.x, e.y, H)) dmgEnemy(e, kdmg(STAR.nova) * k * (1 + Math.min(2, area / 90000)), { w: G.spellW, magic: true, nova: byDash, quiet: Math.random() < .5 }); ring(cx, cy, Math.sqrt(area) * .7, '#ffffff', .6); addLight(cx, cy, Math.sqrt(area) * 1.6 + 200, '#e8f2ff', 1, .6); }
+  shake(10); hitstop(.08); SFX.play('slam'); SFX.play('evolve');
+  addText(cx, cy - 40, 'Supernova !', '#e8f2ff', 24, true);
+  G.stats.novas = (G.stats.novas || 0) + 1;
+  if (tl('berger')) { const sp = G.spells[0]; sp.ammo = spellMax(sp); sp.t = 0; G.hero.hp = Math.min(G.hero.maxHp, G.hero.hp + G.hero.maxHp * .15); }
+  if (byDash) { const d = G.spells[1]; d.ammo = Math.min(spellMax(d), d.ammo + 1); }
+  G.stars = []; G.hull = [];
+}
+function updateStars(dt) {
+  if (!G.H.kit) return;
+  G.vault = Math.max(0, G.vault - dt); G.hide = Math.max(0, G.hide - dt);
+  // Comètes en vol
+  for (const c of G.comets) { c.t += dt; if (c.t >= c.T && !c.done) { c.done = true; plantStar(c.x, c.y); } }
+  G.comets = G.comets.filter(c => !c.done);
+  for (const s of G.stars) { s.t += dt; s.pop = Math.max(0, s.pop - dt); }
+  G.stars = G.stars.filter(s => s.t < s.life);
+  while (G.stars.length > starMax()) G.stars.shift();
+  G.hull = hull(G.stars);
+  // Pluie d’astres et fils d’argent
+  G.starTick -= dt;
+  if (G.hull.length >= 3 && G.starTick <= 0) {
+    G.starTick = STAR.tick;
+    const H = G.hull, links = starLinks(), rain = kdmg(STAR.rain) * (1 + .4 * tl('poussiere')) * (G.vault > 0 ? 1.5 : 1), line = kdmg(STAR.line) * (1 + .6 * tl('fils'));
+    const cx = H.reduce((a, s) => a + s.x, 0) / H.length, cy = H.reduce((a, s) => a + s.y, 0) / H.length;
+    for (const e of G.enemies) {
+      if (e.dead) continue;
+      if (inPoly(e.x, e.y, H)) { dmgEnemy(e, rain, { w: G.spellW, magic: true, quiet: Math.random() < .75 }); if (tl('gravite') && !e.boss && !e.T.static) { const dx = cx - e.x, dy = cy - e.y, d = Math.hypot(dx, dy) || 1; e.x += dx / d * 14; e.y += dy / d * 14; } }
+      for (const [a, b] of links) if (segDist2(e.x, e.y - 8, a, b) < 16 * 16) { dmgEnemy(e, line, { w: G.spellW, magic: true, quiet: Math.random() < .7, slow: tl('fils') ? .45 : 0 }); break; }
+    }
+    // Étoiles filantes visuelles dans la constellation
+    const xs = H.map(s => s.x), ys = H.map(s => s.y), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+    for (let k = 0, n = 0; k < 20 && n < 5; k++) { const x = rand(x0, x1), y = rand(y0, y1); if (inPoly(x, y, H)) { n++; G.starfalls.push({ x, y, t: 0, T: .35 }); } }
+  }
+  for (const f of G.starfalls) f.t += dt;
+  G.starfalls = G.starfalls.filter(f => f.t < f.T);
+  // Zodiaque : supernova automatique, la constellation reste
+  if (tl('zodiaque') && G.hull.length >= 3) { G.zodiac -= dt; if (G.zodiac <= 0) { G.zodiac = 5; const keep = G.stars.slice(); supernova(false); G.stars = keep; G.hull = hull(keep); } }
+}
+// Prisme : une flèche qui traverse une étoile se divise ; Pluie d’argent : elle se dédouble sur un fil.
+function refract(p) {
+  if (!G.H.kit || p.refr || p.w !== G.weapons[0]) return;
+  for (const s of G.stars) {
+    if (d2(p.x, p.y + 10, s.x, s.y) < 22 * 22) {
+      p.refr = true; const n = 3 + 2 * tl('prisme'), a0 = Math.atan2(p.vy, p.vx), sp = Math.hypot(p.vx, p.vy);
+      for (let i = 0; i < n; i++) { if (i === (n - 1) / 2) continue; const a = a0 + (i - (n - 1) / 2) * .28; G.projs.push({ ...p, x: s.x, y: s.y - 10, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, hit: new Set(), refr: true, life: .7, glow: '#cfe6ff' }); }
+      p.glow = '#cfe6ff'; sparkle(s.x, s.y - 10, '#cfe6ff', 4); return;
+    }
+  }
+  if (tl('argent') && !p.dup) for (const [a, b] of starLinks()) if (segDist2(p.x, p.y + 10, a, b) < 12 * 12) { p.dup = true; const a0 = Math.atan2(p.vy, p.vx) + .25, sp = Math.hypot(p.vx, p.vy); G.projs.push({ ...p, vx: Math.cos(a0) * sp, vy: Math.sin(a0) * sp, hit: new Set(), dup: true, refr: true, glow: '#e8f2ff' }); return; }
+}
+// Voûte céleste (ultime) : trois étoiles autour du héros et tous les liens pendant 7 s.
+function castVault() {
+  const h = G.hero; G.vault = 7;
+  for (let i = 0; i < 3; i++) { const a = -Math.PI / 2 + i / 3 * TAU; plantStar(h.x + Math.cos(a) * 170, h.y + Math.sin(a) * 140); }
+}
+// Cartes de Lyriel : uniquement son arbre (et quelques bénédictions mineures).
+function kitOffer() {
+  const out = [];
+  for (const b in TREE) {
+    const B = TREE[b], pts = G.kit.branch[b];
+    for (const k in B.cards) {
+      const C = B.cards[k], l = tl(k);
+      if (C.legend) { if (!l && pts >= LEGEND_NEED) out.push({ kind: 'kit', b, id: k, title: C.name, weight: 6 }); }
+      else if (l < C.max) out.push({ kind: 'kit', b, id: k, title: `${C.name}${C.max > 1 ? ` niv. ${l + 1}` : ''}`, weight: 3 });
+    }
+  }
+  for (const k of ['vigueur', 'regen', 'aimant', 'armure']) { const l = plv(k); if (l < PASSIVES[k].max) out.push({ kind: 'pass', id: k, title: `${PASSIVES[k].name} niv. ${l + 1}`, weight: .8 }); }
+  return out;
+}
+function applyKit(o) {
+  G.kit.tal[o.id] = tl(o.id) + 1; G.kit.branch[o.b]++;
+  const C = TREE[o.b].cards[o.id];
+  if (o.id === 'grace') { G.passives.vitesse = (G.passives.vitesse || 0) + 1; G.H = { ...G.H, hp: G.H.hp + 15 }; recomputeMods(); }
+  if (C.legend) { banner(C.name, `Légendaire · ${TREE[o.b].name}`, 'ult'); SFX.play('evolve'); sparkle(G.hero.x, G.hero.y - 30, TREE[o.b].color, 30); }
+  renderSpells();
+}
+// ═════════════════════════ La Nuit des étoiles filantes : événements et boss ═════════════════════════
+function updateEvents(dt) {
+  const M = G.M;
+  if (!G.started || G.finalDown) return;
+  const ev = G.event;
+  if (ev && ev.k !== 'boss') {
+    ev.t -= dt;
+    if (ev.k === 'chute') { ev.spawn -= dt; if (ev.spawn <= 0 && ev.n < ev.max) { ev.spawn = .45; ev.n++; const h = G.hero, a = rand(0, TAU), r = rand(120, 560), x = clamp(h.x + Math.cos(a) * r, 40, BAL.world.w - 40), y = clamp(h.y + Math.sin(a) * r * .8, 40, BAL.world.h - 40); G.meteors.push({ x, y, t: -.9, T: .5, r: 60, dmg: kdmg(30), w: G.spellW, kind: 'astre' }); G.tele.push({ k: 'circle', x, y, r: 60, t: 0, T: 1.4, ally: true }); } }
+    if (ev.k === 'herauts' && ev.list.every(e => e.dead)) ev.t = 0;
+    if (ev.t <= 0) { if (ev.k === 'lune') { G.bloodMoon = false; toast('La lune de sang pâlit.', 'info'); } G.event = null; }
+  }
+  const nx = M.events[G.evIdx];
+  if (nx && G.t >= nx[0] && (!G.event || G.event.k !== 'herauts')) { G.evIdx++; startEvent(nx[1]); }
+}
+function startEvent(k) {
+  const E = EVENTS[k], h = G.hero;
+  banner(E.name, k === 'boss' ? 'Boss final' : 'Événement', k === 'boss' ? 'boss' : 'surge'); SFX.play(k === 'boss' ? 'boss' : 'warn'); toast(E.desc, 'info');
+  if (k === 'chute') G.event = { k, t: 9, spawn: 0, n: 0, max: 14 + Math.floor(G.m * 2) };
+  else if (k === 'lune') { G.event = { k, t: 30 }; G.bloodMoon = true; }
+  else if (k === 'herauts') {
+    const list = []; for (let i = 0; i < 3; i++) { const p = placeAway(420, 620, list); list.push(spawnEnemy('heraut', { ...p, elite: true })); }
+    G.event = { k, t: 75, list };
+  } else if (k === 'boss') {
+    // Arène : on ne peut plus fuir. La horde se calme, le Dévoreur descend.
+    const { w, h: wh } = BAL.world;
+    G.arena = { x: clamp(h.x, 600, w - 600), y: clamp(h.y, 520, wh - 520), r: 560 };
+    const e = spawnEnemy(G.M.boss, { x: G.arena.x, y: G.arena.y - 380 }); e.final = true; e.phase = 1;
+    G.event = { k, t: 1e9, boss: e };
+    shake(10);
+  }
+}
+// Hérauts : ils filent vers tes étoiles, les dévorent et grossissent.
+function eatStar(e, s) {
+  const i = G.stars.indexOf(s); if (i < 0) return;
+  G.stars.splice(i, 1); G.hull = hull(G.stars);
+  ring(s.x, s.y, 40, '#9a5aff', .4); puff(s.x, s.y - 6, '#5a3a8a', 10); SFX.play('zap');
+  addText(s.x, s.y - 30, 'Dévorée !', '#c58cff', 16, true);
+  if (e.boss) e.hp = Math.min(e.maxHp, e.hp + e.maxHp * .025);
+  else if ((e.ate = (e.ate || 0) + 1) <= 4) { e.maxHp *= 1.25; e.hp = Math.min(e.maxHp, e.hp + e.maxHp * .25); e.scale *= 1.1; e.r *= 1.05; }
+}
+function nearestStar(x, y, r) { let b = null, bd = r * r; for (const s of G.stars) { const q = d2(x, y, s.x, s.y); if (q < bd) { bd = q; b = s; } } return b; }
+// Le Dévoreur d’étoiles : trois phases (rayon, puits, éclipse), il mange tes étoiles.
+function devoreurAI(e, dt, dx, dy, dd) {
+  const hpf = e.hp / e.maxHp, h = G.hero;
+  const ph = hpf > .6 ? 1 : hpf > .3 ? 2 : 3;
+  if (ph !== e.phase) {
+    e.phase = ph;
+    if (ph === 2) { banner('Le Dévoreur s’éveille', 'Puits gravitationnels', 'boss'); SFX.play('boss'); }
+    if (ph === 3) { G.eclipse = true; banner('Éclipse', 'Seules tes étoiles éclairent l’arène', 'boss'); SFX.play('boss'); shake(8); }
+  }
+  if (e.blind > 0) { e.blind -= dt; return { x: 0, y: 0 }; }
+  if (e.state === 'chase') {
+    const s = nearestStar(e.x, e.y, 520);
+    e.aiT -= dt;
+    if (e.aiT <= 0) {
+      const opts = ph === 1 ? ['beam'] : ph === 2 ? ['beam', 'well', 'well'] : ['beam', 'well', 'burst'];
+      e.atkK = pick(opts); e.state = 'wind';
+      if (e.atkK === 'beam') { e.aiT = .9; e.bx = dx / dd; e.by = dy / dd; G.tele.push({ k: 'line', e, x: e.x, y: e.y, dx: e.bx, dy: e.by, len: 760, w: 56, t: 0, T: .9 }); }
+      else if (e.atkK === 'well') { e.aiT = 1.1; e.wx = h.x; e.wy = h.y; G.tele.push({ k: 'circle', x: h.x, y: h.y, r: 130, t: 0, T: 1.1 }); }
+      else { e.aiT = .7; G.tele.push({ k: 'circle', x: e.x, y: e.y, r: 90, t: 0, T: .7, e }); }
+      SFX.play('warn');
+      return { x: 0, y: 0 };
+    }
+    if (s) { const sx = s.x - e.x, sy = s.y - e.y, d = Math.hypot(sx, sy) || 1; if (d < e.r + 16) { eatStar(e, s); return { x: 0, y: 0 }; } return { x: sx / d * e.speed * 1.25 * dt, y: sy / d * e.speed * 1.25 * dt }; }
+    return null;
+  }
+  // Attaque en préparation
+  e.aiT -= dt;
+  if (e.aiT <= 0) {
+    if (e.atkK === 'beam') {
+      const x1 = e.x + e.bx * 760, y1 = e.y + e.by * 760;
+      G.fx.push({ k: 'beam', x: e.x, y: e.y - 30, x1, y1: y1 - 30, t: 0, T: .4, w: 56 });
+      if (segDist2(h.x, h.y, { x: e.x, y: e.y }, { x: x1, y: y1 }) < (28 + BAL.heroR) ** 2) hurtHero(e.T.dmg * 1.4 * BAL.dmg(G.m));
+      for (const o of G.enemies) if (!o.dead && o !== e && segDist2(o.x, o.y, { x: e.x, y: e.y }, { x: x1, y: y1 }) < 34 * 34) dmgEnemy(o, 9999, { quiet: true });
+      shake(8); SFX.play('boom');
+    } else if (e.atkK === 'well') { G.wells.push({ x: e.wx, y: e.wy, t: 0, T: 3.6, r: 130, tick: 0 }); SFX.play('quake'); }
+    else { const n = 22, off = rand(0, TAU); for (let i = 0; i < n; i++) { const a = off + i / n * TAU; G.eprojs.push({ x: e.x, y: e.y - 30, vx: Math.cos(a) * 190, vy: Math.sin(a) * 190, dmg: 14 * BAL.dmg(G.m), life: 4, r: 8, kind: 'void' }); } for (let i = 0; i < 3; i++) spawnEnemy('heraut', { x: e.x + rand(-60, 60), y: e.y + rand(-60, 60) }); SFX.play('zap'); }
+    e.state = 'chase'; e.aiT = ph === 1 ? 3.6 : ph === 2 ? 3 : 2.4;
+  }
+  return { x: 0, y: 0 };
+}
+// Puits gravitationnels : attirent le héros (et la horde), le cœur brûle.
+function updateWells(dt) {
+  const h = G.hero;
+  for (const w of G.wells) {
+    w.t += dt; w.tick -= dt;
+    const dx = w.x - h.x, dy = w.y - h.y, d = Math.hypot(dx, dy) || 1;
+    if (d < 340 && !G.dash) { const k = 95 * (1 - d / 340) + 25; h.x += dx / d * k * dt; h.y += dy / d * k * dt; }
+    forNear(w.x, w.y, 300, e => { if (e.boss) return; const ex = w.x - e.x, ey = w.y - e.y, ed = Math.hypot(ex, ey) || 1; e.x += ex / ed * 70 * dt; e.y += ey / ed * 70 * dt; });
+    if (w.tick <= 0) { w.tick = .45; if (d < 58) hurtHero(10 * BAL.dmg(G.m)); forNear(w.x, w.y, 58, e => { if (!e.boss) dmgEnemy(e, kdmg(20), { quiet: true }); }); }
+  }
+  G.wells = G.wells.filter(w => w.t < w.T);
+  // Arène : on ne peut pas en sortir
+  if (G.arena) { const a = G.arena, dx = h.x - a.x, dy = h.y - a.y, d = Math.hypot(dx, dy); if (d > a.r - 18) { h.x = a.x + dx / d * (a.r - 18); h.y = a.y + dy / d * (a.r - 18); } }
+}
 // ═════════════════════════ Cartes de niveau ═════════════════════════
 // Armes communes à débloquer au camp (défis).
 const weaponOpen = id => !(id === 'nova' || id === 'meteore') || unlocked(id);
 function offerPool() {
+  if (G.H.kit) return kitOffer();
   const out = [], ownedW = new Set(G.weapons.map(w => w.id));
   for (const w of G.weapons) {
     const W = WEAPONS[w.id];
@@ -1879,7 +2183,7 @@ function offerPool() {
   // Talents : des cartes qui transforment les sorts du champion, à partir du niveau 3.
   if (G.level >= 3) G.spells.forEach((sp, i) => { for (const k in SPELLS[sp.id].talents) if (!sp.tal[k]) out.push({ kind: 'tal', sp, i, id: k, title: SPELLS[sp.id].talents[k].name, weight: 1.5 }); });
   // Cartes d’armée : effectif, ferveur, bannière, vétérans, tambours.
-  for (const k in ARMY_UP) { const l = G.army.ups[k] || 0; if (l < ARMY_UP[k].max) out.push({ kind: 'army', id: k, title: `${ARMY_UP[k].name} niv. ${l + 1}`, weight: 1.8 }); }
+  if (ARMY.on) for (const k in ARMY_UP) { const l = G.army.ups[k] || 0; if (l < ARMY_UP[k].max) out.push({ kind: 'army', id: k, title: `${ARMY_UP[k].name} niv. ${l + 1}`, weight: 1.8 }); }
   return out;
 }
 function rollOffer() {
@@ -1899,6 +2203,7 @@ function applyOffer(o) {
   else if (o.kind === 'up') { o.w.lvl++; }
   else if (o.kind === 'tal') { o.sp.tal[o.id] = true; renderSpells(); banner(o.title, SPELLS[o.sp.id].name, 'ult'); }
   else if (o.kind === 'army') G.army.ups[o.id] = (G.army.ups[o.id] || 0) + 1;
+  else if (o.kind === 'kit') applyKit(o);
   else if (o.kind === 'pass') { G.passives[o.id] = plv(o.id) + 1; recomputeMods(); }
   else if (o.kind === 'evo') { G.cr -= 1; o.w.evo = true; G.stats.evos++; banner(WEAPONS[o.id].evo.name, 'Évolution', 'ult'); SFX.play('evolve'); shake(6); ring(G.hero.x, G.hero.y, 120, '#ffd76a', .8); sparkle(G.hero.x, G.hero.y - 30, '#ffd76a', 40); }
   else if (o.kind === 'gold') G.gold += o.v;
@@ -1909,6 +2214,7 @@ function openCards() {
   renderCards(); $('#scr-cards').hidden = false; SFX.play('level');
 }
 function cardInfo(o) {
+  if (o.kind === 'kit') { const B = TREE[o.b], C = B.cards[o.id], l = tl(o.id), pts = G.kit.branch[o.b], leg = Object.values(B.cards).find(c => c.legend); return { rc: C.legend ? 'var(--evo)' : B.color, top: `${B.name}${C.legend ? ' · Légendaire' : ''}`, ic: C.icon, name: C.name, desc: C.desc, evo: C.legend ? '' : (pts + 1 >= LEGEND_NEED && !tl(Object.keys(B.cards).find(k => B.cards[k].legend)) ? `Débloque la légendaire : ${leg.name}` : `Branche ${B.name} : ${pts + 1} sur ${LEGEND_NEED} vers ${leg.name}`), foot: C.max > 1 ? `Niv. ${l} → ${l + 1} sur ${C.max}` : '' }; }
   if (o.kind === 'army') { const A = ARMY_UP[o.id], l = G.army.ups[o.id] || 0; return { rc: ARMY.color, top: 'Armée', ic: A.icon, name: A.name, desc: A.desc, evo: '', foot: `Niv. ${l} → ${l + 1} sur ${A.max}` }; }
   if (o.kind === 'tal') { const S = SPELLS[o.sp.id], T = S.talents[o.id]; return { rc: 'var(--epic)', top: `Talent · ${S.name}`, ic: S.icon, name: T.name, desc: T.desc, evo: '', foot: `Transforme ton sort (${o.i ? 'Espace' : 'clic droit'})` }; }
   if (o.kind === 'new') { const W = WEAPONS[o.id]; return { rc: 'var(--rare)', top: 'Nouvelle arme', ic: W.icon, name: W.name, desc: W.desc, evo: `Évolue avec ${PASSIVES[W.evo.with].name} → ${W.evo.name}`, foot: 'Niv. 1 sur 5' }; }
@@ -1988,6 +2294,8 @@ function update(dt) {
   updateProjs(dt);
   updateUlt(dt);
   updateSpells(dt);
+  updateStars(dt);
+  updateWells(dt);
   updateDrops(dt);
   updateFx(dt);
   if (G.enemies.some(e => e.dead)) G.enemies = G.enemies.filter(e => !e.dead);
@@ -2233,7 +2541,7 @@ function addLight(x, y, r, c, a = 1, T = 0) { if (T) G.flashes.push({ x, y, r, c
 function lightPass(ox, oy) {
   const sc = L.s / 2, W = lc.width, H = lc.height;
   lctx.globalCompositeOperation = 'source-over'; lctx.globalAlpha = 1;
-  lctx.fillStyle = THEMES[G.M.ground].ambient; lctx.fillRect(0, 0, W, H);
+  lctx.fillStyle = G.eclipse ? '#1e1a2c' : G.bloodMoon ? '#b4949c' : G.arena ? '#8a86a8' : THEMES[G.M.ground].ambient; lctx.fillRect(0, 0, W, H);
   lctx.globalCompositeOperation = 'lighter';
   for (const l of LIGHTS) {
     const x = (l.x + ox) * sc, y = (l.y + oy) * sc, r = l.r * sc;
@@ -2284,6 +2592,7 @@ function render() {
   const aura = G.weapons.find(w => w.id === 'feu');
   if (aura) { const s = wstats(aura); ctx.fillStyle = hexA(aura.evo ? '#ffd76a' : '#ff8a3a', .1 + .04 * Math.sin(t * 6)); ellipse(h.x, h.y - 10, s.radius, s.radius * .8); ctx.fill(); addLight(h.x, h.y - 10, s.radius * 1.5, '#ff8a3a', .35); }
   drawObjectiveGround(t);
+  drawStarField(t);
   // Point d’assaut de l’armée : bannière verte et onde qui pulse
   if (G.order) { const o = G.order, k = (t * 1.5) % 1; ctx.strokeStyle = hexA(ARMY.color, .7 * (1 - k)); ctx.lineWidth = 3; ellipse(o.x, o.y, 20 + 50 * k, (20 + 50 * k) * .5); ctx.stroke(); ctx.fillStyle = '#2a1a10'; ctx.fillRect(o.x - 1.5, o.y - 44, 3, 44); ctx.fillStyle = ARMY.color; ctx.beginPath(); ctx.moveTo(o.x + 1.5, o.y - 44); ctx.lineTo(o.x + 24 + Math.sin(t * 6) * 3, o.y - 37); ctx.lineTo(o.x + 1.5, o.y - 29); ctx.closePath(); ctx.fill(); addLight(o.x, o.y - 20, 90, ARMY.color, .45); }
   // Entités triées par profondeur (décor compris, pour passer derrière les arbres et les ruines)
@@ -2330,12 +2639,14 @@ function render() {
     ctx.globalAlpha = G.M.ground === 'void' ? .16 : .1; ctx.drawImage(SOFT.fog, fx - f.r, fy - f.r * .5, f.r * 2, f.r);
   }
   ctx.globalAlpha = 1;
+  drawArena(t, v);
   collectLights(t, v);
   // Calque de lumière
   lightPass(ox, oy);
   // Passe additive : halos, braises, projectiles lumineux
   world(); ctx.globalCompositeOperation = 'lighter';
   for (const l of LIGHTS) if (l.bloom) bloom(l.x, l.y, l.bloom, l.c, l.ba || .35);
+  glowStarField(t);
   for (const p of G.parts) if (p.add) { const a = 1 - p.t / p.T; bloom(p.x, p.y, p.r * 3.2, p.c, a * .9); }
   for (const m of MOTES) {
     const mx = v.x0 + ((m.x * L.vw + Math.sin(t * .3 + m.ph) * 30 + t * 8 * m.z) % (L.vw + 40)), my = v.y0 + ((m.y * L.vh - t * 12 * m.z) % L.vh + L.vh) % L.vh;
@@ -2362,6 +2673,7 @@ function render() {
   ctx.fillStyle = VIGNETTE; ctx.fillRect(0, 0, W2, H2);
   if (G.waaagh > 0) { ctx.fillStyle = `rgba(200,40,20,${.08 + .05 * Math.sin(t * 10)})`; ctx.fillRect(0, 0, W2, H2); }
   if (G.starfall > 0) { ctx.fillStyle = 'rgba(10,14,40,.25)'; ctx.fillRect(0, 0, W2, H2); }
+  if (G.bloodMoon) { ctx.fillStyle = `rgba(150,20,20,${.1 + .03 * Math.sin(t * 2)})`; ctx.fillRect(0, 0, W2, H2); }
   const hpf = h.hp / h.maxHp;
   if (hpf < .35 || h.hurt > 0) { const g = ctx.createRadialGradient(W2 / 2, H2 / 2, Math.min(W2, H2) * .35, W2 / 2, H2 / 2, Math.max(W2, H2) * .7); g.addColorStop(0, 'rgba(160,20,10,0)'); g.addColorStop(1, `rgba(160,20,10,${h.hurt > 0 ? .45 : (.35 - hpf) * 1.2 + .1 * Math.sin(t * 5)})`); ctx.fillStyle = g; ctx.fillRect(0, 0, W2, H2); }
   drawCrosshair();
@@ -2375,7 +2687,13 @@ function render() {
 function collectLights(t, v) {
   const h = G.hero, inV = (x, y, m) => x > v.x0 - m && x < v.x1 + m && y > v.y0 - m && y < v.y1 + m;
   const L1 = (x, y, r, c, a, bl, ba) => { addLight(x, y, r, c, a); if (bl) { const l = LIGHTS[LIGHTS.length - 1]; if (l) { l.bloom = bl; l.ba = ba; } } };
-  L1(h.x, h.y - 20, 340, '#ffe6c0', .95);
+  L1(h.x, h.y - 20, G.eclipse ? 190 : 340, '#ffe6c0', G.eclipse ? .7 : .95);
+  // Étoiles, fils et comètes de Lyriel : ce sont elles qui éclairent la nuit (et l’éclipse).
+  for (const s of G.stars) L1(s.x, s.y - 8, G.eclipse ? 300 : 210, '#cfe6ff', .9);
+  if (G.hull.length >= 3) { const H = G.hull, cx = H.reduce((a, s) => a + s.x, 0) / H.length, cy = H.reduce((a, s) => a + s.y, 0) / H.length; L1(cx, cy, Math.sqrt(polyArea(H)) * 1.1 + 80, '#9fc8ff', .5); }
+  for (const c of G.comets) L1(c.x0 + (c.x - c.x0) * c.t / c.T, c.y0 + (c.y - c.y0) * c.t / c.T, 120, '#e8f2ff', .7);
+  for (const w of G.wells) L1(w.x, w.y, w.r * 2, '#7a3aff', .35);
+  if (G.arena) for (let i = 0; i < 10; i++) { const a = i / 10 * TAU; L1(G.arena.x + Math.cos(a) * G.arena.r, G.arena.y + Math.sin(a) * G.arena.r * .8, 160, '#9a5aff', .5); }
   L1(h.x, h.y - 10, 120, G.F.color, .35, 46, .18);
   for (const d of decorFor(G.M.ground)) {
     if (!inV(d.x, d.y, 200)) continue;
@@ -2519,6 +2837,7 @@ function drawDrop(d, t) {
   else if (d.type === 'cr') { ctx.save(); ctx.translate(d.x, y); ctx.rotate(Math.PI / 4 + Math.sin(t * 2) * .2); ctx.fillStyle = '#1d6a7a'; ctx.fillRect(-8, -8, 16, 16); ctx.fillStyle = '#7fe3f3'; ctx.fillRect(-7, -7, 14, 14); ctx.fillStyle = '#f0feff'; ctx.fillRect(-6, -6, 5, 5); ctx.restore(); }
   else if (d.type === 'food') { const s = sprC('meat', () => bladeSprite('meat')); ctx.drawImage(s.c, d.x - 12, y - 12, 24, 24); }
   else if (d.type === 'vac') { ctx.fillStyle = hexA('#9fd8ff', .35 + .2 * Math.sin(t * 6)); circle(d.x, y, 13); ctx.fill(); ctx.fillStyle = '#e8f6ff'; circle(d.x, y, 6); ctx.fill(); }
+  else if (d.type === 'astre') { ctx.fillStyle = '#cfe6ff'; starPath(d.x, y, 9, t * 2 + d.bob); ctx.fill(); ctx.fillStyle = '#ffffff'; starPath(d.x, y, 4, t * 2 + d.bob); ctx.fill(); addLight(d.x, y, 80, '#cfe6ff', .6); }
   else if (d.type === 'chest') { const s = sprC('chest', () => bladeSprite('chest')); shadowAt(d.x, y + 12, 18, 6); ctx.drawImage(s.c, d.x - 16, y - 18, 32, 32); if (((t * 1.5) % 2) < .1) sparkle(d.x, y - 10, '#ffd76a', 1); }
 }
 function drawZone(z, t) {
@@ -2587,9 +2906,63 @@ function drawFx(f) {
     ctx.strokeStyle = hexA('#fff1c8', a * .6); ctx.lineWidth = 2; ellipse(f.x, f.y, r * 1.1, r * .88); ctx.stroke();
   }
   else if (f.k === 'nova') { ctx.strokeStyle = hexA(f.c, a); ctx.lineWidth = 8 * a + 2; ellipse(f.x, f.y, f.r * k, f.r * .8 * k); ctx.stroke(); ctx.fillStyle = hexA(f.c, a * .12); ctx.fill(); }
+  else if (f.k === 'beam') {
+    // Rayon du Néant : un trait noir et violet bordé de blanc
+    for (const [w, c] of [[f.w * 1.6 * a, 'rgba(90,30,170,.35)'], [f.w * a, 'rgba(20,0,40,.85)'], [f.w * .35 * a, 'rgba(230,210,255,.9)']]) { ctx.strokeStyle = c; ctx.lineWidth = Math.max(1, w); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(f.x, f.y); ctx.lineTo(f.x1, f.y1); ctx.stroke(); }
+  }
   else if (f.k === 'bolt') {
     for (const [w, al, c] of [[9, .25, f.c], [4, .6, f.c], [1.6, 1, '#ffffff']]) { ctx.strokeStyle = hexA(c, a * al); ctx.lineWidth = w; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(f.pts[0][0], f.pts[0][1]); for (const p of f.pts.slice(1)) ctx.lineTo(p[0], p[1]); ctx.stroke(); }
   }
+}
+// ── Lyriel : constellations, étoiles, comètes ; arène et puits du Dévoreur ──
+function starPath(x, y, r, rot) {
+  ctx.beginPath();
+  for (let i = 0; i < 8; i++) { const a = rot + i * Math.PI / 4, rr = i % 2 ? r * .32 : r; ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
+  ctx.closePath();
+}
+function drawStarField(t) {
+  const H = G.hull;
+  // Intérieur de la constellation : voile bleuté qui miroite
+  if (H.length >= 3) {
+    ctx.fillStyle = `rgba(140,180,255,${.07 + .03 * Math.sin(t * 3)})`; ctx.beginPath(); H.forEach((s, i) => i ? ctx.lineTo(s.x, s.y) : ctx.moveTo(s.x, s.y)); ctx.closePath(); ctx.fill();
+  }
+  for (const [a, b] of starLinks()) {
+    ctx.strokeStyle = 'rgba(150,190,255,.28)'; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(a.x, a.y - 8); ctx.lineTo(b.x, b.y - 8); ctx.stroke();
+    ctx.setLineDash([10, 8]); ctx.lineDashOffset = -t * 60; ctx.strokeStyle = '#e8f2ff'; ctx.lineWidth = 2; ctx.stroke(); ctx.setLineDash([]); ctx.lineDashOffset = 0;
+  }
+  for (const s of G.stars) {
+    const left = s.life - s.t, blink = left < 1.5 && Math.floor(t * 10) % 2, r = (11 + 2 * Math.sin(t * 4 + s.id)) * (1 + s.pop * 1.5);
+    if (blink) continue;
+    shadowAt(s.x, s.y + 2, 10, 4, .4);
+    ctx.strokeStyle = 'rgba(207,230,255,.35)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(s.x, s.y - 8, 15, -Math.PI / 2, -Math.PI / 2 + TAU * left / s.life); ctx.stroke();
+    ctx.fillStyle = '#cfe6ff'; starPath(s.x, s.y - 8, r, t * .8 + s.id); ctx.fill();
+    ctx.fillStyle = '#ffffff'; starPath(s.x, s.y - 8, r * .5, t * .8 + s.id); ctx.fill();
+  }
+  for (const f of G.starfalls) { const k = f.t / f.T, y = f.y - 120 * (1 - k); ctx.strokeStyle = `rgba(232,242,255,${.8 * (1 - k * .5)})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(f.x + 18 * (1 - k), y - 26); ctx.lineTo(f.x + 18 * (1 - k) - 6, y); ctx.stroke(); }
+  for (const c of G.comets) { const k = c.t / c.T, x = c.x0 + (c.x - c.x0) * k, y = c.y0 + (c.y - c.y0) * k - Math.sin(k * Math.PI) * 50; ctx.strokeStyle = 'rgba(207,230,255,.5)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(c.x0 + (c.x - c.x0) * Math.max(0, k - .25), c.y0 + (c.y - c.y0) * Math.max(0, k - .25)); ctx.lineTo(x, y); ctx.stroke(); ctx.fillStyle = '#ffffff'; starPath(x, y, 8, t * 10); ctx.fill(); }
+  // Puits gravitationnels du Dévoreur
+  for (const w of G.wells) {
+    const a = Math.min(1, w.t / .3, (w.T - w.t) / .4);
+    ctx.globalAlpha = a;
+    const g = ctx.createRadialGradient(w.x, w.y, 0, w.x, w.y, w.r); g.addColorStop(0, 'rgba(5,0,12,.95)'); g.addColorStop(.45, 'rgba(40,10,70,.6)'); g.addColorStop(1, 'rgba(60,20,110,0)');
+    ctx.fillStyle = g; ellipse(w.x, w.y, w.r, w.r * .8); ctx.fill();
+    ctx.strokeStyle = 'rgba(180,120,255,.55)'; ctx.lineWidth = 2.5;
+    for (let i = 0; i < 4; i++) { const r = w.r * ((i / 4 + t * .6) % 1); ctx.beginPath(); ctx.ellipse(w.x, w.y, r, r * .8, 0, t * 3 + i, t * 3 + i + 2.2); ctx.stroke(); }
+    ctx.globalAlpha = 1;
+  }
+}
+// Arène : un cercle de flammes du Néant, le monde extérieur plongé dans l’ombre.
+function drawArena(t, v) {
+  const a = G.arena; if (!a) return;
+  ctx.fillStyle = 'rgba(6,2,14,.55)'; ctx.beginPath(); ctx.rect(v.x0 - 50, v.y0 - 50, L.vw + 100, L.vh + 200); ctx.ellipse(a.x, a.y, a.r, a.r * .8, 0, 0, TAU, true); ctx.fill('evenodd');
+  ctx.strokeStyle = `rgba(160,90,255,${.6 + .2 * Math.sin(t * 4)})`; ctx.lineWidth = 4; ellipse(a.x, a.y, a.r, a.r * .8); ctx.stroke();
+  for (let i = 0; i < 3 && G.parts.length < 800; i++) { const ang = rand(0, TAU); G.parts.push({ x: a.x + Math.cos(ang) * a.r, y: a.y + Math.sin(ang) * a.r * .8, vx: 0, vy: rand(-70, -30), t: 0, T: .6, c: pick(['#9a5aff', '#c58cff', '#5a2aaa']), r: 2.4, g: 0, add: true }); }
+}
+// Halos des fils et des étoiles (passe additive)
+function glowStarField(t) {
+  for (const [a, b] of starLinks()) { ctx.strokeStyle = 'rgba(120,170,255,.22)'; ctx.lineWidth = 16; ctx.beginPath(); ctx.moveTo(a.x, a.y - 8); ctx.lineTo(b.x, b.y - 8); ctx.stroke(); }
+  for (const s of G.stars) bloom(s.x, s.y - 8, 34, '#cfe6ff', .55);
+  for (const f of G.starfalls) bloom(f.x, f.y, 16, '#e8f2ff', .5 * (1 - f.t / f.T));
 }
 // ── Objectifs au sol : cercle de la rune, trajet et arrivée de la caravane ──
 function drawObjectiveGround(t) {
@@ -2733,7 +3106,7 @@ function renderSpells() {
   });
   // Ordre de ralliement (Maj) ; l’assaut se donne au clic gauche.
   const rb = document.createElement('button'); rb.type = 'button'; rb.className = 'sp rally'; rb.title = 'Ralliement : l’armée revient autour de toi, soignée et plus résistante pendant 3 s. L’assaut se donne au clic gauche.'; rb.setAttribute('aria-label', 'Ordre : ralliement');
-  rb.innerHTML = '<span aria-hidden="true">🚩</span><span class="cd"></span><span class="t"></span><span class="key">Maj</span>'; rb.addEventListener('click', rallyArmy); box.appendChild(rb);
+  rb.innerHTML = '<span aria-hidden="true">🚩</span><span class="cd"></span><span class="t"></span><span class="key">Maj</span>'; rb.addEventListener('click', rallyArmy); if (ARMY.on) box.appendChild(rb);
   const U = ULTS[G.fac], u = document.createElement('button');
   u.type = 'button'; u.className = 'sp ult'; u.id = 'ult'; u.title = `${U.name} : ${U.desc}`; u.setAttribute('aria-label', `Ultime : ${U.name}`);
   u.innerHTML = `<span aria-hidden="true">${U.icon}</span><span class="cd"></span><span class="t"></span><span class="key">R</span>`;
@@ -2749,9 +3122,9 @@ function updateSpellHUD() {
     b.querySelector('.cd').style.setProperty('--p', f.toFixed(3));
     if (hudCache['sp' + i] !== key) { hudCache['sp' + i] = key; b.querySelector('.t').textContent = empty ? Math.ceil(sp.t) : ''; b.classList.toggle('ready', !empty); const am = b.querySelector('.ammo'); if (am) am.textContent = max > 1 ? sp.ammo : ''; }
   });
-  const rb = btns[G.spells.length];
+  const rb = ARMY.on ? btns[G.spells.length] : null;
   if (rb) { const f = G.rallyCd / ARMY.rallyCd, key = Math.ceil(G.rallyCd); rb.querySelector('.cd').style.setProperty('--p', f.toFixed(3)); if (hudCache.spr !== key) { hudCache.spr = key; rb.querySelector('.t').textContent = G.rallyCd > 0 ? key : ''; rb.classList.toggle('ready', G.rallyCd <= 0 && G.allies.length > 0); } }
-  const u = btns[G.spells.length + 1]; if (!u) return;
+  const u = btns[G.spells.length + (ARMY.on ? 1 : 0)]; if (!u) return;
   const uf = G.ult.v / G.ult.need;
   u.querySelector('.cd').style.setProperty('--p', (1 - uf).toFixed(3));
   const key = uf >= 1 ? 'r' : Math.floor(uf * 100);
@@ -2760,6 +3133,17 @@ function updateSpellHUD() {
 // Panneau de mission : objectif en cours et progression.
 function updateMissionHUD() {
   const ms = G.mis, M = G.M, o = ms.obj, n = M.objectives.length;
+  // Mission à événements : événement en cours, ou compte à rebours du suivant.
+  if (M.events) {
+    const ev = G.event, nx = M.events[G.evIdx];
+    let title, text = '', p = 0;
+    if (ev && ev.k === 'boss') { const b = ev.boss; title = b.dead ? 'Victoire !' : 'Abats le Dévoreur d’étoiles'; text = b.dead ? '' : `Phase ${b.phase || 1} sur 3 · traverse ta constellation sur lui : ×2,5`; p = 1 - b.hp / b.maxHp; }
+    else if (ev) { title = EVENTS[ev.k].name; text = ev.k === 'herauts' ? `${ev.list.filter(e => e.dead).length} / 3 hérauts abattus` : `Encore ${Math.ceil(ev.t)}${NB}s`; p = ev.k === 'herauts' ? ev.list.filter(e => e.dead).length / 3 : 1 - ev.t / (ev.k === 'lune' ? 30 : 9); }
+    else if (nx) { title = `Prochain : ${EVENTS[nx[1]].name}`; text = G.started ? `Dans ${Math.max(0, Math.ceil(nx[0] - G.t))}${NB}s` : 'Bouge pour commencer'; p = 0; }
+    setText('#m-eyebrow', `${M.name} · ${G.D.name}`); setText('#m-title', title || ''); setText('#m-text', text);
+    $('#m-bar').style.setProperty('--p', clamp(p, 0, 1).toFixed(3));
+    return;
+  }
   let eb = `${M.name} · ${G.D.name}`, title, text = '', p = 0;
   if (ms.phase === 'wait') { title = ms.i >= n ? 'Le boss approche' : `Objectif ${ms.i + 1} sur ${n}`; text = G.started ? `Dans ${Math.ceil(ms.t)}${NB}s` : 'Bouge pour commencer'; p = 0; }
   else if (ms.phase === 'obj') {
@@ -2801,7 +3185,7 @@ function endRun(win) {
   $('#end-box').className = 'end ' + (win ? 'win' : 'lose');
   $('#end-eyebrow').textContent = `${G.H.name} · ${G.M.name} · ${G.D.name}`;
   $('#end-title').textContent = win ? 'Mission accomplie !' : G.failReason || `${G.H.name} est tombé`;
-  const stats = [['Durée', clock(G.t)], ['Objectifs', `${G.mis.done} / ${G.M.objectives.length}`], ['Ennemis vaincus', fmt(G.kills)], ['Niveau', G.level], ['Meilleur combo', '×' + fmt(G.combo.max)], ['Évolutions', G.stats.evos], ['Recrues', `${G.army.recruits} (${G.allies.length} debout)`], ['Ultimes', G.ult.uses]];
+  const stats = [['Durée', clock(G.t)], G.M.events ? ['Supernovas', G.stats.novas || 0] : ['Objectifs', `${G.mis.done} / ${G.M.objectives.length}`], ['Ennemis vaincus', fmt(G.kills)], ['Niveau', G.level], ['Meilleur combo', '×' + fmt(G.combo.max)], ['Évolutions', G.stats.evos], ['Recrues', `${G.army.recruits} (${G.allies.length} debout)`], ['Ultimes', G.ult.uses]];
   $('#end-stats').innerHTML = stats.map(([k, v]) => `<div><b>${v}</b><span>${k}</span></div>`).join('');
   $('#end-runes').textContent = `+${runes} runes (total : ${META.runes})`;
   $('#end-unlocks').innerHTML = fresh.map(c => `<span>✦ Débloqué : ${c.reward}</span>`).join('');
@@ -2814,20 +3198,24 @@ function endRun(win) {
 }
 function heroPortrait(canvas, fac) { const s = unitSprite(HEROES[fac].look), g = canvas.getContext('2d'); canvas.width = s.w; canvas.height = s.h; g.imageSmoothingEnabled = false; g.clearRect(0, 0, s.w, s.h); g.drawImage(s.idle, 0, 0); }
 function buildMenu() {
-  if (!mapOpen(selMap)) selMap = 'cendres';
+  if (!mapOpen(selMap) || MAPS[selMap].hidden) selMap = 'etoiles';
+  if (HEROES[selFac].locked) selFac = 'elfes';
   if (!diffOpen(selDiff)) selDiff = 'normal';
   $('#facs').innerHTML = Object.values(FACTIONS).map(F => {
     const H = HEROES[F.id], U = ULTS[F.id], W = WEAPONS[H.start], [s1, s2] = H.spells.map(id => SPELLS[id]);
+    if (H.locked) return `<button class="fac locked" type="button" data-f="${F.id}" style="--fc:${F.color}" aria-pressed="false" disabled>
+      <div class="fac-head"><canvas data-hero="${F.id}" aria-hidden="true"></canvas><div><h3>${H.name}</h3><p class="sub">${F.name} · bientôt</p></div></div>
+      <p class="pitch">${fr(H.locked)}</p></button>`;
     return `<button class="fac" type="button" data-f="${F.id}" style="--fc:${F.color}" aria-pressed="${F.id === selFac}">
       <div class="fac-head"><canvas data-hero="${F.id}" aria-hidden="true"></canvas><div><h3>${H.name}</h3><p class="sub">${F.name} · ${H.title}</p></div></div>
       <p class="pitch">${fr(F.pitch)}</p>
       <div class="stats"><span>PV <b>${H.hp}</b></span><span>Vitesse <b>${H.speed}</b></span><span>Armure <b>${H.armor}</b></span></div>
-      <ul class="kit"><li><em>Armée</em>${fr(ARMY[F.id].desc)}</li><li><em>Attaque</em>${W.icon} ${W.name}</li><li><em>Clic droit</em>${s1.icon} ${s1.name}</li><li><em>Espace</em>${s2.icon} ${s2.name}</li><li><em>Ultime</em>${U.icon} ${U.name}</li></ul>
+      <ul class="kit"><li><em>Attaque</em>${W.icon} ${W.name}</li><li><em>Clic droit</em>${s1.icon} ${s1.name}</li><li><em>Espace</em>${s2.icon} ${s2.name}</li><li><em>Ultime</em>${U.icon} ${U.name}</li></ul>
     </button>`;
   }).join('');
   for (const c of document.querySelectorAll('canvas[data-hero]')) heroPortrait(c, c.dataset.hero);
   for (const el of document.querySelectorAll('.fac')) el.addEventListener('click', () => { selFac = el.dataset.f; for (const o of document.querySelectorAll('.fac')) o.setAttribute('aria-pressed', String(o === el)); newRun(selFac); });
-  $('#maps').innerHTML = Object.entries(MAPS).map(([id, M]) => {
+  $('#maps').innerHTML = Object.entries(MAPS).filter(([, M]) => !M.hidden).map(([id, M]) => {
     const open = mapOpen(id), done = META.done[id] || {}, won = Object.keys(done).map(d => DIFFS[d].name).join(', ');
     return `<button class="mapb" type="button" data-m="${id}" aria-pressed="${id === selMap}" ${open ? '' : 'disabled'}><b>${M.name}</b><span>${open ? fr(M.desc) : '🔒 ' + fr(CHALLENGES.find(c => c.id === id).text)}</span>${won ? `<em>✓ ${won}</em>` : ''}</button>`;
   }).join('');
@@ -2864,7 +3252,8 @@ function startRun() {
   SFX.init(); newRun(selFac); G.phase = 'play';
   for (const id of ['#scr-menu', '#scr-cards', '#scr-pause', '#scr-end', '#scr-camp']) $(id).hidden = true;
   $('#hud').hidden = false; for (const k in hudCache) delete hudCache[k]; $('#toasts').innerHTML = '';
-  $('#hint').innerHTML = lastPointer === 'mouse' ? '<b>ZQSD</b> pour bouger, la <b>souris</b> pour viser. Sorts : <b>clic droit</b> et <b>Espace</b>, ultime : <b>R</b>.<br>Les ennemis vaincus rejoignent ton <b>armée</b> : <b>clic gauche</b> = assaut, <b>Maj</b> = ralliement.' : 'Pose le doigt et <b>glisse</b> pour te déplacer. Touche les sorts en bas.';
+  $('#p-army').hidden = !ARMY.on;
+  $('#hint').innerHTML = lastPointer === 'mouse' ? '<b>ZQSD</b> pour bouger, la <b>souris</b> pour viser.<br><b>Clic droit</b> : plante une étoile. Trois étoiles forment une <b>constellation</b>.<br><b>Espace</b> : Pas lunaire. Traverse ta constellation pour la faire exploser.' : 'Pose le doigt et <b>glisse</b> pour te déplacer. Touche les sorts en bas.';
   updateAimBtn();
   renderSlots(); renderSpells();
   heroPortrait($('#hb-portrait'), G.fac); $('#hb-name').innerHTML = `${G.H.name}<small>${G.F.name}</small>`; $('#herobox').style.setProperty('--hc', G.F.color);
