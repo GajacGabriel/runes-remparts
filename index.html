@@ -3,13 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Prototype d’action roguelite heroic fantasy : champions, sorts visés à la souris, missions à objectifs et boss.">
+<meta name="description" content="Prototype d’action roguelite heroic fantasy : un champion à mécanique unique, une carte fixe à explorer, des quêtes, un cycle jour/nuit et un arbre de talents.">
 <meta name="theme-color" content="#15110d">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
 <title>Runes & Remparts</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -264,6 +263,55 @@ kbd { font-family: var(--f-body); font-size: .75em; font-weight: 800; padding: 0
   #clock b { font-size: 1.6rem; } .slot { width: 1.6rem; height: 1.6rem; font-size: .9rem; } .slot.p { width: 1.25rem; height: 1.25rem; }
   .sp { width: 3.3rem; height: 3.3rem; font-size: 1.5rem; } .sp.ult { width: 3.9rem; height: 3.9rem; } #mission { top: 5.6rem; }
 }
+/* ── v0.11 : minicarte, journal de quêtes, arbre de talents, colporteur ── */
+#mm { position: absolute; right: max(.7rem, env(safe-area-inset-right, 0px)); top: 2.9rem; width: 13.5rem; display: grid; gap: .1rem; justify-items: end; pointer-events: none; }
+#mm canvas { width: 100%; aspect-ratio: 4 / 3; border-radius: .5rem; border: 2px solid #9a7a44; box-shadow: 0 .3rem 1rem #000c, inset 0 0 0 1px #000; background: #0d0a07; }
+#mm span { font-family: var(--f-display); font-size: 1rem; text-shadow: 0 2px 0 #000; }
+#mm small { font-size: .62rem; color: var(--muted); text-shadow: 0 1px 2px #000; }
+#mm.big { z-index: 15; right: 50%; top: 50%; transform: translate(50%, -50%); width: min(78vw, 118vh); }
+#mm.big small { display: none; }
+#combo { top: 15rem; }
+#m-list { margin: .25rem 0 0; padding: .3rem 0 0; list-style: none; display: grid; gap: .12rem; border-top: 1px solid #ffffff1a; }
+#m-list li { display: grid; grid-template-columns: 1.2rem 1fr auto; gap: .35rem; align-items: center; font-size: .78rem; color: #cfc2a2; }
+#m-list li b { font-size: .74rem; font-variant-numeric: tabular-nums; }
+#m-list li.main { color: var(--gold); font-weight: 800; }
+#m-list li.on { color: #fff3c8; } #m-list li.on b { color: var(--gold); }
+#m-list li.ok { color: #9be38a; } #m-list li.ko { color: #ff9b84; text-decoration: line-through; }
+#prompt { position: absolute; left: 50%; bottom: 7rem; transform: translateX(-50%); font-weight: 800; font-size: .95rem; color: var(--gold); background: rgba(18,14,10,.9); border: 1px solid var(--brass); border-radius: .5rem; padding: .3rem .9rem; pointer-events: none; }
+#h-tree.glow { border-color: var(--gold); color: var(--gold); animation: ultready 1.1s ease-in-out infinite; }
+.tree { width: min(62rem, 100%); display: grid; gap: .7rem; }
+.tree-head { display: flex; justify-content: space-between; align-items: end; gap: 1rem; flex-wrap: wrap; }
+.tree h2 { margin: 0; font-family: var(--f-display); font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1; }
+.tree-pts { margin: 0; font-size: 1.05rem; color: var(--muted); } .tree-pts b { color: var(--gold); font-size: 1.4rem; }
+.branches { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .7rem; }
+.branch { --bc: #fff; display: grid; gap: .45rem; align-content: start; padding: .6rem; border-radius: .8rem; border: 1px solid color-mix(in srgb, var(--bc) 45%, #000); background: linear-gradient(170deg, color-mix(in srgb, var(--bc) 12%, #211a12), #15100b 80%); }
+.branch h3 { margin: 0; font-family: var(--f-display); font-size: 1.4rem; color: var(--bc); display: flex; justify-content: space-between; align-items: baseline; }
+.branch h3 small { font-family: var(--f-body); font-size: .8rem; color: var(--parch); }
+.tier { position: relative; display: grid; gap: .25rem; padding-top: .35rem; }
+.tier + .tier::before { content: ''; position: absolute; left: 50%; top: -.4rem; width: 2px; height: .55rem; background: color-mix(in srgb, var(--bc) 50%, transparent); }
+.tier.shut { opacity: .55; }
+.tier .req { font-size: .62rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); text-align: center; }
+.tier.legend .req { color: var(--evo); }
+.nodes { display: flex; gap: .35rem; justify-content: center; }
+.node { flex: 1; max-width: 9rem; cursor: pointer; display: grid; justify-items: center; gap: .1rem; padding: .35rem .3rem .4rem; border-radius: .6rem; border: 1px solid #4e3f2c; background: #120d09; text-align: center; transition: transform .12s; }
+.node .ic { font-size: 1.45rem; line-height: 1.1; }
+.node b { font-size: .74rem; line-height: 1.1; }
+.node .rank { display: flex; gap: 2px; } .node .rank i { width: .42rem; height: .42rem; border-radius: 50%; background: #ffffff22; } .node .rank i.on { background: var(--bc); box-shadow: 0 0 .3rem var(--bc); }
+.node.own { border-color: color-mix(in srgb, var(--bc) 70%, #000); background: color-mix(in srgb, var(--bc) 14%, #120d09); }
+.node.can { border-color: var(--gold); box-shadow: 0 0 .8rem #ffd76a55; }
+.node.can:hover, .node.can:focus-visible { transform: translateY(-2px); outline: none; box-shadow: 0 0 1.1rem #ffd76aaa; }
+.node.locked { cursor: default; filter: grayscale(.8); }
+.node.max { border-color: var(--bc); box-shadow: inset 0 0 .8rem color-mix(in srgb, var(--bc) 35%, transparent); }
+.tier.legend .node { max-width: 12rem; border-style: dashed; }
+.tier.legend .node.own { border-style: solid; border-color: var(--evo); box-shadow: 0 0 1rem #ffd76a66; }
+.tree-detail { margin: 0; min-height: 2.6rem; font-size: .9rem; background: #00000045; border: 1px solid var(--line); border-radius: .6rem; padding: .45rem .7rem; color: #e3d6b8; }
+.tree-detail em { color: #ff9b84; font-style: normal; }
+.tree .pick-actions { justify-content: center; }
+.shop-gold { margin: 0; font-weight: 800; font-size: 1.15rem; display: flex; gap: .35rem; align-items: center; color: var(--gold); }
+.cards.shop { grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr)); max-width: 60rem; }
+.cards.shop .card { min-height: 9.5rem; }
+.card:disabled { opacity: .45; cursor: default; transform: none; }
+@media (max-width: 760px) { .branches { grid-template-columns: minmax(0, 1fr); } #mm { width: 9.5rem; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 
@@ -280,13 +328,16 @@ kbd { font-family: var(--f-body); font-size: .75em; font-weight: 800; padding: 0
       <span class="pill" id="p-army" title="Armée : soldats ralliés / effectif max"><span>⚔️</span><span id="h-army">0</span></span>
       <span class="pill" title="Or"><i class="coin"></i><span id="h-or">0</span></span>
       <span class="pill" title="Cristal (sert aux évolutions)"><i class="gem"></i><span id="h-cr">0</span></span>
+      <button id="h-tree" class="hbtn" type="button" title="Arbre de talents (T)" aria-label="Arbre de talents">✨ <span id="h-pts">0</span></button>
       <button id="h-sound" class="hbtn" type="button" title="Son (M)" aria-label="Couper le son">🔊</button>
       <button id="h-fs" class="hbtn" type="button" title="Plein écran" aria-label="Plein écran">⛶</button>
       <button id="h-pause" class="hbtn" type="button" title="Pause (Échap)" aria-label="Pause">❚❚</button>
     </div>
     <div id="bossbar" hidden><small id="h-boss">Boss</small><span><i id="h-bosshp"></i></span></div>
     <div id="combo" hidden></div>
-    <div id="mission"><small id="m-eyebrow">Mission</small><b id="m-title">—</b><span id="m-text"></span><i id="m-bar"></i></div>
+    <div id="mission"><small id="m-eyebrow">Mission</small><b id="m-title">—</b><span id="m-text"></span><i id="m-bar"></i><ul id="m-list" hidden></ul></div>
+    <div id="mm" hidden><canvas id="minimap" width="480" height="360" aria-label="Carte du Val"></canvas><span id="mm-reg"></span><small>Tab : grande carte</small></div>
+    <div id="prompt" hidden></div>
     <div id="herobox"><canvas id="hb-portrait" aria-hidden="true"></canvas><div class="hb"><b id="hb-name">Héros</b><div id="hpbar"><u id="hb-hpd"></u><i id="hb-hp"></i><span id="hb-hpt">0 / 0</span></div></div></div>
     <div id="spells"></div>
     <button id="aimbtn" class="btn small" type="button" title="Basculer la visée (C)">Visée : souris</button>
@@ -298,8 +349,8 @@ kbd { font-family: var(--f-body); font-size: .75em; font-weight: 800; padding: 0
   <section class="screen" id="scr-menu">
     <div class="menu">
       <div class="brand">
-        <div><p class="eyebrow">Prototype jouable · v0.10</p><h1>Runes <span>&amp;</span> Remparts</h1></div>
-        <p class="tag">Un champion, une mécanique. Lyriel tisse des constellations sur le champ de bataille et fait exploser la nuit. Survis à la Nuit des étoiles filantes et abats le Dévoreur d’étoiles.</p>
+        <div><p class="eyebrow">Prototype jouable · v0.11</p><h1>Runes <span>&amp;</span> Remparts</h1></div>
+        <p class="tag">Un val à explorer, deux nuits, des quêtes. Lyriel tisse des constellations : rallume les Phares d’Astrée avant l’Éclipse, puis abats le Dévoreur d’étoiles à l’Observatoire.</p>
       </div>
       <div class="facs" id="facs"></div>
       <div class="row2">
@@ -320,8 +371,9 @@ kbd { font-family: var(--f-body); font-size: .75em; font-weight: 800; padding: 0
           <li><b>Étoile filante</b> (<kbd>Clic droit</kbd> ou <kbd>E</kbd>, 3 charges) : une comète plante une étoile au point visé. Dès <b>3 étoiles</b>, elles se relient en <b>constellation</b> : ses fils brûlent ce qui les traverse, une pluie d’astres frappe l’intérieur.</li>
           <li>Une flèche qui <b>traverse une étoile</b> se divise en 3. Vise à travers tes étoiles.</li>
           <li><b>Pas lunaire</b> (<kbd>Espace</kbd>) : dash invulnérable. <b>Traverse ta constellation</b> pour la faire exploser en <b>supernova</b> (le dash est rendu). <b>Voûte céleste</b> (<kbd>R</kbd>) : 6 étoiles toutes reliées.</li>
-          <li>Chaque niveau propose 3 cartes de <b>ton arbre</b> : Astronome, Archère ou Danseuse. 5 cartes dans une branche débloquent sa <b>légendaire</b>.</li>
-          <li><b>La nuit</b> : chute d’étoiles, lune de sang, hérauts qui dévorent tes étoiles… puis l’arène du <b>Dévoreur d’étoiles</b>. Une supernova déclenchée sur lui le blesse deux fois et demie plus.</li>
+          <li>Chaque niveau donne un <b>point de talent</b> à placer dans <b>l’arbre de Lyriel</b> (<kbd>T</kbd>) : Astronome, Archère ou Danseuse. Chaque palier s’ouvre avec assez de points dans sa branche, jusqu’à la <b>légendaire</b>.</li>
+          <li><b>Le Val d’Astrée</b> : une carte fixe avec ses régions (<kbd>Tab</kbd> pour la grande carte). Rallume les <b>3 Phares</b> en plantant tes étoiles sur leurs socles : chacun affaiblit le boss. Quêtes secondaires : le hameau à défendre, le camp des pillards, le Chef de guerre des Hauts, et 6 menhirs de lune qui donnent des points de talent. Le <b>colporteur</b> (<kbd>F</kbd>) vend des reliques.</li>
+          <li><b>Jour, puis nuit</b>, deux fois : la nuit, tes étoiles frappent plus fort mais la horde se lève (chute d’étoiles, hérauts, lune de sang). Puis vient <b>l’Éclipse</b> : rejoins l’Observatoire et abats le <b>Dévoreur d’étoiles</b>. Une supernova déclenchée sur lui le blesse deux fois et demie plus.</li>
           <li>Chaque mission rapporte des <b>runes</b>, même en cas de défaite. Dépense-les au <b>camp</b> ; les défis débloquent armes, missions et difficultés.</li>
         </ul>
       </div>
@@ -343,6 +395,25 @@ kbd { font-family: var(--f-body); font-size: .75em; font-weight: 800; padding: 0
       <h2 id="pick-title">Choisis une amélioration</h2>
       <div class="cards" id="pick-cards"></div>
       <div class="pick-actions"><button class="btn small" id="pick-reroll" type="button">Relancer</button></div>
+    </div>
+  </section>
+
+  <section class="screen" id="scr-tree" hidden>
+    <div class="tree">
+      <div class="tree-head"><div><p class="eyebrow" id="tree-eyebrow">Niveau 1</p><h2>L’arbre de Lyriel</h2></div><p class="tree-pts" id="tree-pts"></p></div>
+      <div class="branches" id="tree-branches"></div>
+      <p class="tree-detail" id="tree-detail"></p>
+      <div class="pick-actions"><button class="btn small" id="tree-close" type="button">Reprendre (T)</button></div>
+    </div>
+  </section>
+
+  <section class="screen" id="scr-shop" hidden>
+    <div class="pick">
+      <p class="eyebrow">Le colporteur du Val</p>
+      <h2>« Des merveilles, voyageuse ! »</h2>
+      <p class="shop-gold" id="shop-gold"></p>
+      <div class="cards shop" id="shop-cards"></div>
+      <div class="pick-actions"><button class="btn small" id="shop-close" type="button">Partir (F)</button></div>
     </div>
   </section>
 
@@ -420,7 +491,7 @@ function shade(hex, f) { const m = v => Math.max(0, Math.min(255, Math.round(f <
 // ═════════════════════════ Équilibrage ═════════════════════════
 // Tous les réglages de design sont ici, pour itérer vite.
 const BAL = {
-  world: { w: 3600, h: 2400 },
+  world: { w: 4800, h: 3600 },
   viewH: 700,                                      // hauteur visible du monde (en unités)
   heroR: 12,
   magnet: 70,                                      // rayon de ramassage de base
@@ -487,7 +558,8 @@ const SPELLS = {
 // Une mission = des objectifs dans l’ordre, un boss intermédiaire, puis le boss final.
 const MAPS = {
   cendres: { hidden: true, name: 'Les Marches cendrées', desc: 'Libère des prisonniers, prends un fort cendreux, et lève ta horde contre le Chef de guerre.', ground: 'forest', objectives: ['prisonniers', 'nids', 'fort', 'zone', 'chasse'], mid: { after: 1, type: 'boss2' }, boss: 'boss1' },
-  etoiles: { name: 'La Nuit des étoiles filantes', desc: 'Une nuit d’événements célestes, jusqu’à l’arène du Dévoreur d’étoiles.', ground: 'forest', events: [[70, 'chute'], [150, 'lune'], [225, 'herauts'], [290, 'chute'], [360, 'boss']], boss: 'devoreur', objectives: [] },
+  val: { name: 'Le Val d’Astrée', desc: 'Une carte, deux nuits, des quêtes. Rallume les Phares avant l’Éclipse, puis abats le Dévoreur d’étoiles à l’Observatoire.', ground: 'forest', val: true, events: [], boss: 'devoreur', objectives: [] },
+  etoiles: { hidden: true, name: 'La Nuit des étoiles filantes', desc: 'Une nuit d’événements célestes, jusqu’à l’arène du Dévoreur d’étoiles.', ground: 'forest', events: [[70, 'chute'], [150, 'lune'], [225, 'herauts'], [290, 'chute'], [360, 'boss']], boss: 'devoreur', objectives: [] },
   neant: { hidden: true, name: 'Le Col du Néant', desc: 'Escorte la caravane à travers le col corrompu, jusqu’au Seigneur du Néant.', ground: 'void', objectives: ['escorte', 'prisonniers', 'fort', 'nids', 'zone'], mid: { after: 1, type: 'boss3' }, boss: 'boss4' },
 };
 
@@ -535,6 +607,88 @@ const EVENTS = {
   herauts: { name: 'Les Hérauts du Dévoreur', desc: 'Trois hérauts dévorent tes étoiles. Abats-les avant qu’ils ne grandissent.' },
   boss: { name: 'L’Éclipse', desc: 'Le Dévoreur d’étoiles descend. Il mange tes étoiles… mais une supernova sur lui le blesse deux fois et demie plus.' },
 };
+// ═════════════════════════ Le Val d’Astrée : une carte fixe ═════════════════════════
+// Le monde n’est plus infini : un val bordé de forêts et de falaises, avec ses régions, son lac, sa rivière,
+// ses routes et ses lieux de quête. L’eau et la roche bloquent le passage (héros comme horde).
+const VAL = {
+  start: { x: 2400, y: 3060 },
+  lake: { x: 2380, y: 1880, rx: 560, ry: 330 },
+  river: { pts: [[2880, 1950], [3250, 2080], [3620, 2010], [3980, 2110], [4320, 2050], [4900, 2130]], w: 84 },
+  bridges: [{ x: 3250, y: 2080, rx: 62, ry: 92 }, { x: 4320, y: 2050, rx: 62, ry: 92 }],
+  ridges: [
+    { pts: [[760, 1265], [1000, 1215], [1350, 1180], [1800, 1235], [2160, 1195]], w: 62 },
+    { pts: [[2640, 1195], [3050, 1245], [3500, 1165], [3850, 1250], [4170, 1190]], w: 62 },
+    { pts: [[1360, 2360], [1430, 2640], [1390, 2930]], w: 56 },
+    { pts: [[3330, 2480], [3400, 2700], [3380, 2860]], w: 56 },
+  ],
+  roads: [
+    [[2400, 3330], [2400, 3060], [2420, 2840], [2400, 2660]],
+    [[2400, 2660], [2050, 2780], [1700, 3080], [1250, 3140], [880, 3060]],
+    [[2400, 2660], [2080, 2440], [1720, 2180], [1300, 1980], [1000, 1880]],
+    [[1720, 2180], [1690, 1720], [2100, 1430], [2400, 1260], [2400, 980], [2400, 760]],
+    [[2400, 2660], [2800, 2480], [3250, 2080], [3480, 1820], [3720, 1640]],
+    [[2800, 2480], [3080, 2720], [3520, 3060], [4060, 2920]],
+    [[3720, 1640], [4330, 1430], [4360, 1050], [3920, 730]],
+    [[1000, 1880], [620, 1520], [520, 1150], [800, 820], [1080, 690]],
+  ],
+  regions: [
+    { id: 'clairiere', name: 'La Clairière du Guet', x: 2400, y: 2950, r: 560 },
+    { id: 'hameau', name: 'Le Hameau des Lucioles', x: 860, y: 3000, r: 520 },
+    { id: 'bois', name: 'Le Bois d’Argent', x: 1000, y: 1950, r: 760 },
+    { id: 'lac', name: 'Les Rives du Lac de Lune', x: 2380, y: 1880, r: 720 },
+    { id: 'camp', name: 'Le Camp des Pillards', x: 3720, y: 1600, r: 460 },
+    { id: 'marais', name: 'Le Marais cendré', x: 4000, y: 2850, r: 820 },
+    { id: 'ruines', name: 'Les Ruines d’Astrée', x: 3850, y: 700, r: 700 },
+    { id: 'hauts', name: 'Les Hauts du Chef de guerre', x: 1000, y: 700, r: 720 },
+    { id: 'obs', name: 'L’Observatoire', x: 2400, y: 700, r: 560 },
+  ],
+  obs: { x: 2400, y: 700, r: 430 },
+  phares: [
+    { id: 'bois', name: 'Phare du Bois d’Argent', x: 1000, y: 1830 },
+    { id: 'ruines', name: 'Phare des Ruines', x: 3920, y: 690 },
+    { id: 'marais', name: 'Phare du Marais', x: 4060, y: 2870 },
+  ],
+  hameau: { x: 860, y: 3000 },
+  camp: { x: 3720, y: 1580 },
+  lair: { x: 1080, y: 640 },
+  merchant: { x: 2500, y: 2610 },
+  menhirs: [[1660, 2660], [560, 1480], [3150, 1430], [3050, 3260], [1700, 560], [4560, 2420]],
+};
+// Cycle jour / nuit (secondes) : la nuit, la horde se lève… et les étoiles de Lyriel brillent plus fort.
+const CYCLE = [
+  { k: 'jour', n: 1, T: 150 }, { k: 'nuit', n: 1, T: 90 }, { k: 'jour', n: 2, T: 150 }, { k: 'nuit', n: 2, T: 90 }, { k: 'eclipse', n: 0, T: 1e9 },
+];
+const NIGHT = { star: 1.35, life: 3, spawn: 1.1, day: .6, speed: 1.15, coin: .03, xp: .75 };   // bonus des étoiles la nuit ; débit de la horde (nuit, jour) ; or et XP adaptés à la carte
+const PHARE = { ritual: 18, pedR: 150, snap: 70, bossCut: .15, bossHp: 2.8 }; // rituel (s), socles, aimantation ; PV du boss sur la carte, et part retirée par phare rallumé
+// Quêtes du Val (l’ordre est libre) : la quête principale (les Phares) affaiblit le boss final.
+const QUESTS = {
+  phares: { name: 'Les Phares d’Astrée', icon: '🗼', main: true, desc: 'Plante tes étoiles sur les trois socles d’un phare et protège le rituel. Chaque phare rallumé affaiblit le Dévoreur.' },
+  hameau: { name: 'Le Hameau des Lucioles', icon: '🏡', desc: 'La horde marche sur le hameau : défends le feu des villageois pendant 40 secondes.' },
+  camp: { name: 'Le Camp des Pillards', icon: '⛺', desc: 'Rase les trois tentes et abats le chef du camp.' },
+  chef: { name: 'Le Chef de guerre', icon: '💀', desc: 'Il règne sur les Hauts. Abats-le pour une relique légendaire et un point de talent.' },
+  menhirs: { name: 'Les Menhirs de lune', icon: '🗿', desc: 'Six menhirs cachés dans le val : chacun t’apprend un point de talent.' },
+};
+// Reliques (façon objets magiques) : gagnées par les quêtes, les coffres et chez le colporteur.
+const RELICS = {
+  cape: { name: 'Cape de brume', icon: '🧥', r: 1, desc: '+12 % de vitesse de déplacement.' },
+  coeur: { name: 'Cœur de chêne', icon: '🌳', r: 1, desc: '+40 PV max.' },
+  lanterne: { name: 'Lanterne des lucioles', icon: '🏮', r: 1, desc: '+50 % de rayon de ramassage et +0,5 PV par seconde.' },
+  carquois: { name: 'Carquois elfique', icon: '🏹', r: 1, desc: 'Flèches lunaires : +15 % de dégâts et +1 perforation.' },
+  bourse: { name: 'Bourse du colporteur', icon: '👛', r: 1, desc: '+40 % d’or ramassé.' },
+  astrolabe: { name: 'Astrolabe', icon: '🧭', r: 2, desc: '+1 charge d’Étoile filante.' },
+  larme: { name: 'Larme de lune', icon: '💧', r: 2, desc: 'Tes étoiles durent 4 s de plus.' },
+  sablier: { name: 'Sablier d’argent', icon: '⏳', r: 2, desc: 'Recharge des sorts −15 %.' },
+  noctambule: { name: 'Cœur noctambule', icon: '🦉', r: 2, desc: 'La nuit : +30 % de dégâts et +15 % de vitesse.' },
+  aube: { name: 'Plume de l’aube', icon: '🪶', r: 2, desc: 'Le jour, tu régénères 2 PV par seconde.' },
+  couronne: { name: 'Couronne d’Astrée', icon: '👑', r: 3, desc: 'Supernovas : +50 % de dégâts et de rayon.' },
+  miroir: { name: 'Miroir des fées', icon: '🪞', r: 3, desc: 'Le Pas lunaire plante une étoile là où tu arrives.' },
+  oeil: { name: 'Œil du Dévoreur', icon: '👁️', r: 3, desc: '+30 % de dégâts contre les élites et les boss.' },
+  faucille: { name: 'Faucille lunaire', icon: '🌙', r: 3, desc: 'Chaque supernova remplit 20 % de ta jauge d’ultime.' },
+};
+const RARITY = [null, { name: 'Relique commune', c: '#cfc6b4', price: 80 }, { name: 'Relique rare', c: '#62a9ff', price: 150 }, { name: 'Relique légendaire', c: '#ffd76a', price: 260 }];
+// Arbre de talents : chaque branche a 4 paliers. Un palier s’ouvre avec assez de points dans sa branche.
+const TIERS = { poussiere: 1, tenaces: 1, fils: 2, ourse: 2, gravite: 3, zodiaque: 4, volee: 1, rapide: 1, lunaires: 2, prisme: 2, comete: 3, argent: 4, grace: 1, nova: 1, pas: 2, sillage: 2, eclipse: 3, berger: 4 };
+const TIER_NEED = [0, 0, 3, 6, 10];
 const DIFFS = {
   normal: { name: 'Normal', hp: 1, dmg: 1, runes: 1 },
   heroique: { name: 'Héroïque', hp: 1.6, dmg: 1.35, runes: 1.7 },
@@ -667,6 +821,7 @@ const ENEMIES = {
   devoreur: { name: 'Le Dévoreur d’étoiles', boss: true, hp: 42000, spd: 58, dmg: 30, xp: 150, r: 28, col: '#2a1640', ai: 'devoreur', starEater: true },
   heraut: { name: 'Héraut du Dévoreur', hp: 45, spd: 66, dmg: 7, xp: 6, r: 12, col: '#5a3a8a', starEater: true },
   // Ennemis d’objectif : le nid ne bouge pas, le porteur fuit le héros.
+  tente: { name: 'Tente de pillards', hp: 1100, spd: 0, dmg: 0, xp: 15, r: 30, col: '#8a6a3a', static: true, tent: true },
   nid: { name: 'Nid de cendres', hp: 650, spd: 0, dmg: 6, xp: 20, r: 26, col: '#6a4a6a', static: true },
   cage: { name: 'Cage de prisonniers', hp: 900, spd: 0, dmg: 0, xp: 10, r: 30, col: '#8a5a2e', static: true, cage: true },
   porteur: { name: 'Porteur de runes', hp: 160, spd: 128, dmg: 6, xp: 40, r: 11, col: '#c9a24a', flee: true },
@@ -836,6 +991,9 @@ const LOOKS = {
   lyriel: { px: 2.6, tall: true, skin: SK.elf, armor: '#3e6a4a', pants: '#2e4a34', boots: '#2a2a20', trim: '#f0e0a0', hood: '#2e5a3a', ears: true, weapon: 'bow', cape: '#4f8a5a', eye: '#2a4a2a' },
   milicien: { px: 2, skin: SK.human, armor: '#8a929c', pants: '#4a3a2a', boots: '#2a2018', trim: '#e2b443', helm: '#a9b2bc', weapon: 'sword', shield: '#3a6ab0', eye: '#1a1010' },
   golem: { px: 2.7, bulky: true, skin: '#7a7670', armor: '#5d5a54', arms: '#7a7670', pants: '#4a4742', boots: '#3a3834', trim: '#7fe3f3', cracks: true, weapon: 'none', eye: '#7fe3f3' },
+  colporteur: { px: 2.2, skin: SK.human, armor: '#6a4a2a', pants: '#3a2a1a', boots: '#2a1a10', trim: '#d9a64a', hood: '#5a3a1e', weapon: 'torch', sack: '#9a7a4a', eye: '#1a1010' },
+  villageois: { px: 2, skin: SK.human, armor: '#7a6a4a', pants: '#4a3a2a', boots: '#2a2018', trim: '#a8c870', hair: '#6a4a2a', hairStyle: 'short', weapon: 'none', eye: '#1a1010' },
+  villageoise: { px: 1.9, skin: '#e8c0a0', armor: '#8a4a5a', pants: '#5a3040', boots: '#2a2018', trim: '#f0e0a0', hair: '#c8903a', hairStyle: 'short', weapon: 'none', eye: '#1a1010' },
   coureur: { px: 2, kind: 'hound' },
   harpie: { px: 2, kind: 'harpy' },
 };
@@ -879,7 +1037,7 @@ const sprC = (key, build) => cached(key, () => { const P = build(); return { c: 
 
 // ═════════════════════════ État de la run ═════════════════════════
 let G = null;
-let selFac = 'elfes', selMap = 'etoiles', selDiff = 'normal';
+let selFac = 'elfes', selMap = 'val', selDiff = 'normal';
 let lastPointer = 'mouse';
 
 // ═════════════════════════ Progression sauvegardée (camp, défis) ═════════════════════════
@@ -891,7 +1049,7 @@ let META = (() => {
 })();
 function saveMeta() { try { localStorage.setItem(META_KEY, JSON.stringify(META)); } catch (e) { /* stockage indisponible */ } }
 const unlocked = id => !!META.unlocked[id];
-const mapOpen = id => id === 'etoiles' || id === 'cendres' || unlocked(id);
+const mapOpen = id => id === 'val' || id === 'etoiles' || id === 'cendres' || unlocked(id);
 const diffOpen = d => d === 'normal' || unlocked(d);
 function checkChallenges() { const fresh = []; for (const c of CHALLENGES) if (!META.unlocked[c.id] && c.test(META)) { META.unlocked[c.id] = true; fresh.push(c); } return fresh; }
 
@@ -914,7 +1072,9 @@ function newRun(fac, map = selMap, diff = selDiff) {
     ult: { v: 0, need: BAL.ultBase, uses: 0 }, waaagh: 0, starfall: 0, starT: 0,
     paused: false, modal: null, over: false, god: false, inv: 0, shake: 0, hitstop: 0,
     combo: { n: 0, t: 0, max: 0 }, nid: 1, stats: { dmg: 0, gold: 0, evos: 0, spellDmg: 0 },
+    relics: {}, relicQ: [], talentPts: 0, wantTree: false, ward: null, V: null, pois: [],
   };
+  if (G.M.val) { G.V = newVal(); G.pois = valPois(G.V); G.hero.x = VAL.start.x; G.hero.y = VAL.start.y; fogReset(); flowT = 0; }
   addWeapon(H.start); G.weapons[0].sig = true;
   recomputeMods(); G.hero.hp = G.mods.maxHp;
 }
@@ -933,6 +1093,12 @@ function recomputeMods() {
     regen: H.regen + .3 * plv('regen'), magnet: BAL.magnet * H.magnet * (1 + .3 * plv('aimant')) * (1 + .15 * (C.aimant || 0)), gold: 1 + .2 * plv('fortune'),
     xp: (1 + .08 * plv('croissance')) * (1 + .08 * (C.sagesse || 0)), dur: 1 + .12 * plv('duree'),
   };
+  const RL = G.relics || {}, M = G.mods;
+  if (RL.cape) M.speed *= 1.12;
+  if (RL.coeur) M.maxHp += 40;
+  if (RL.lanterne) { M.magnet *= 1.5; M.regen += .5; }
+  if (RL.bourse) M.gold *= 1.4;
+  if (RL.sablier) M.spellCd *= .85;
   const h = G.hero;
   if (old && G.mods.maxHp > old.maxHp) h.hp += G.mods.maxHp - old.maxHp;
   h.maxHp = G.mods.maxHp; h.hp = Math.min(h.hp, h.maxHp);
@@ -984,6 +1150,88 @@ function nearest(x, y, r, n = 1, exclude) {
   return out.slice(0, n);
 }
 
+// ═════════════════════════ Terrain du Val : collisions, chemins, brouillard ═════════════════════════
+// Grille de 40 px : 0 = sol, 1 = eau, 2 = roche (falaises et bord du monde).
+const TCELL = 40, TC = Math.ceil(BAL.world.w / TCELL), TR = Math.ceil(BAL.world.h / TCELL);
+function polyD2(x, y, pts) { let b = 1e12; for (let i = 1; i < pts.length; i++) { const q = segDist2(x, y, { x: pts[i - 1][0], y: pts[i - 1][1] }, { x: pts[i][0], y: pts[i][1] }); if (q < b) b = q; } return b; }
+// Rayon (normalisé) du lac dans une direction : une ellipse irrégulière.
+const lakeR = a => 1 + .06 * Math.sin(3 * a + .7) + .04 * Math.sin(5 * a + 2.1);
+function lakeK(x, y) { const L = VAL.lake, dx = (x - L.x) / L.rx, dy = (y - L.y) / L.ry; return Math.hypot(dx, dy) / lakeR(Math.atan2(dy, dx)); }
+const edgeThr = (x, y) => 120 + 35 * Math.sin((x + y) / 190) + 20 * Math.sin((x - y) / 77);
+function edgeDist(x, y) { const { w, h } = BAL.world; return Math.min(x, y, w - x, h - y) - edgeThr(x, y); }
+const onBridge = (x, y) => VAL.bridges.some(b => ((x - b.x) / b.rx) ** 2 + ((y - b.y) / b.ry) ** 2 < 1);
+function terrainAt(x, y) {
+  if (edgeDist(x, y) < 0) return 2;
+  for (const r of VAL.ridges) if (polyD2(x, y, r.pts) < (r.w / 2) ** 2) return 2;
+  if (onBridge(x, y)) return 0;
+  if (lakeK(x, y) < 1 || polyD2(x, y, VAL.river.pts) < (VAL.river.w / 2) ** 2) return 1;
+  return 0;
+}
+const TER = (() => { const g = new Uint8Array(TC * TR); for (let j = 0; j < TR; j++) for (let i = 0; i < TC; i++) g[j * TC + i] = terrainAt((i + .5) * TCELL, (j + .5) * TCELL); return g; })();
+const cellOf = (x, y) => clamp(Math.floor(y / TCELL), 0, TR - 1) * TC + clamp(Math.floor(x / TCELL), 0, TC - 1);
+function blk(x, y) { if (x < 0 || y < 0 || x >= BAL.world.w || y >= BAL.world.h) return true; return TER[Math.floor(y / TCELL) * TC + Math.floor(x / TCELL)] !== 0; }
+const solid = (x, y, r) => blk(x, y) || blk(x - r, y) || blk(x + r, y) || blk(x, y - r * .6) || blk(x, y + r * .6);
+const walkable = (x, y) => !blk(x, y);
+// Déplacement avec glissement le long des obstacles (un corps déjà coincé peut toujours s’en extraire).
+function moveBody(o, mx, my, r) {
+  if (solid(o.x, o.y, r)) { o.x += mx; o.y += my; return; }
+  if (!solid(o.x + mx, o.y, r)) o.x += mx;
+  if (!solid(o.x, o.y + my, r)) o.y += my;
+}
+// Champ de distances (BFS 8 voisins) vers une cible : la horde contourne le lac, la rivière et les falaises.
+function buildField(out, tx, ty) {
+  out.fill(65535);
+  const q = buildField.q || (buildField.q = new Int32Array(TC * TR)); let hd = 0, tl2 = 0;
+  const s = cellOf(tx, ty); out[s] = 0; q[tl2++] = s;
+  while (hd < tl2) {
+    const c = q[hd++], cx = c % TC, cy = (c - cx) / TC, d = out[c] + 1;
+    for (let oy = -1; oy <= 1; oy++) for (let ox = -1; ox <= 1; ox++) {
+      if (!ox && !oy) continue;
+      const nx = cx + ox, ny = cy + oy; if (nx < 0 || ny < 0 || nx >= TC || ny >= TR) continue;
+      const n = ny * TC + nx; if (TER[n] || out[n] <= d) continue;
+      if (ox && oy && (TER[cy * TC + nx] || TER[ny * TC + cx])) continue;
+      out[n] = d; q[tl2++] = n;
+    }
+  }
+  return out;
+}
+// Direction à suivre dans un champ depuis (x, y) : vers la case voisine la plus proche de la cible.
+function fieldDir(F, x, y) {
+  const c = cellOf(x, y), d0 = F[c]; if (d0 === 65535) return null;
+  const cx = c % TC, cy = (c - cx) / TC; let best = d0, bx = 0, by = 0;
+  for (let oy = -1; oy <= 1; oy++) for (let ox = -1; ox <= 1; ox++) {
+    if (!ox && !oy) continue;
+    const nx = cx + ox, ny = cy + oy; if (nx < 0 || ny < 0 || nx >= TC || ny >= TR) continue;
+    if (ox && oy && (TER[cy * TC + nx] || TER[ny * TC + cx])) continue;
+    const v = F[ny * TC + nx]; if (v < best) { best = v; bx = ox; by = oy; }
+  }
+  if (best >= d0) return null;
+  const tx = (cx + bx + .5) * TCELL - x, ty = (cy + by + .5) * TCELL - y, l = Math.hypot(tx, ty) || 1;
+  return { x: tx / l, y: ty / l };
+}
+const FLOW = new Uint16Array(TC * TR);
+let flowT = 0, flowCell = -1;
+function updateFlow(dt) { flowT -= dt; const c = cellOf(G.hero.x, G.hero.y); if (flowT <= 0 || (c !== flowCell && flowT < .15)) { flowT = .3; flowCell = c; buildField(FLOW, G.hero.x, G.hero.y); } }
+// Champ vers un point quelconque (pour le bot de test), mis en cache par case.
+const FIELDS = new Map();
+function fieldTo(x, y) { const k = cellOf(x, y); let F = FIELDS.get(k); if (!F) { if (FIELDS.size > 12) FIELDS.delete(FIELDS.keys().next().value); F = buildField(new Uint16Array(TC * TR), x, y); FIELDS.set(k, F); } return F; }
+// Région nommée la plus proche (ou les landes entre deux régions).
+function regionAt(x, y) { let b = null, bk = 1; for (const r of VAL.regions) { const k = dist(x, y, r.x, r.y) / r.r; if (k < bk) { bk = k; b = r; } } return b; }
+// Brouillard de guerre : une case par cellule de terrain, révélée autour du héros.
+const FOG = new Uint8Array(TC * TR);
+const fogCv = document.createElement('canvas'); fogCv.width = TC; fogCv.height = TR;
+const fogCtx = fogCv.getContext('2d'), fogImg = fogCtx.createImageData(TC, TR);
+let fogDirty = true;
+function fogReset() { FOG.fill(0); for (let i = 0; i < TC * TR; i++) { fogImg.data[i * 4 + 3] = 255; } fogDirty = true; }
+function reveal(x, y, R) {
+  const i0 = Math.max(0, Math.floor((x - R) / TCELL)), i1 = Math.min(TC - 1, Math.floor((x + R) / TCELL)), j0 = Math.max(0, Math.floor((y - R) / TCELL)), j1 = Math.min(TR - 1, Math.floor((y + R) / TCELL));
+  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+    const n = j * TC + i; if (FOG[n]) continue;
+    if (d2((i + .5) * TCELL, (j + .5) * TCELL, x, y) < R * R) { FOG[n] = 1; fogImg.data[n * 4 + 3] = 0; fogDirty = true; }
+  }
+}
+const seen = (x, y) => !!FOG[cellOf(x, y)];
+function fogCanvas() { if (fogDirty) { fogDirty = false; fogCtx.putImageData(fogImg, 0, 0); } return fogCv; }
 // ═════════════════════════ Entrées : joystick et clavier ═════════════════════════
 const keys = new Set();
 const joy = { on: false, id: null, ox: 0, oy: 0, x: 0, y: 0 };
@@ -1014,8 +1262,9 @@ function spawnPoint() {
     let x, y;
     if (side === 0) { x = rand(v.x0 - m, v.x1 + m); y = v.y0 - m; } else if (side === 1) { x = rand(v.x0 - m, v.x1 + m); y = v.y1 + m; }
     else if (side === 2) { x = v.x0 - m; y = rand(v.y0 - m, v.y1 + m); } else { x = v.x1 + m; y = rand(v.y0 - m, v.y1 + m); }
-    if (x > 20 && y > 20 && x < w - 20 && y < h - 20) return { x, y };
+    if (x > 20 && y > 20 && x < w - 20 && y < h - 20 && walkable(x, y)) return { x, y };
   }
+  for (let tries = 0; tries < 30; tries++) { const a = rand(0, TAU), r = rand(700, 1000), x = G.hero.x + Math.cos(a) * r, y = G.hero.y + Math.sin(a) * r * .8; if (walkable(x, y)) return { x, y }; }
   return { x: clamp(cam.x + rand(-1, 1) * L.vw, 20, w - 20), y: clamp(v.y0 - 60, 20, h - 20) };
 }
 function spawnEnemy(type, opt = {}) {
@@ -1038,11 +1287,11 @@ function pickType(m) {
 function updateSpawns(dt) {
   if (!G.started) return;
   const m = Math.min(G.m, 12), sec = G.t % 60, o = G.mis.obj;
-  const surge = G.t > 30 && sec >= BAL.surgeStart && sec < BAL.surgeStart + BAL.surgeLen;
+  const surge = !G.M.val && G.t > 30 && sec >= BAL.surgeStart && sec < BAL.surgeStart + BAL.surgeLen;
   if (surge && !G.surgeOn) { banner('La marée monte !', '', 'surge'); SFX.play('warn'); }
   G.surgeOn = surge;
   // Tenir la rune attire la horde : le débit grimpe tant que le héros est dans le cercle.
-  let rate = BAL.rate(m) * (surge ? BAL.surgeMul : 1) * (o && o.type === 'zone' && o.inside ? 1.5 : 1) * (G.mis.phase === 'boss' ? 1.2 : 1) * (G.bloodMoon ? 1.6 : 1) * (G.arena ? .35 : 1);
+  let rate = BAL.rate(m) * (surge ? BAL.surgeMul : 1) * (o && o.type === 'zone' && o.inside ? 1.5 : 1) * (G.mis.phase === 'boss' ? 1.2 : 1) * (G.bloodMoon ? (G.V ? 1.25 : 1.6) : 1) * (G.arena ? .35 : 1) * (G.V && !G.arena ? (G.V.eclipse ? 1.3 : isNight() ? NIGHT.spawn : NIGHT.day) : 1);
   G.spawnAcc += rate * dt;
   while (G.spawnAcc >= 1) {
     G.spawnAcc -= 1;
@@ -1061,7 +1310,7 @@ function updateSpawns(dt) {
     }
   }
   const enc = BAL.encircle[G.encIdx];
-  if (enc !== undefined && G.t >= enc) { G.encIdx++; if (!G.arena) encircle(); }
+  if (enc !== undefined && G.t >= enc) { G.encIdx++; if (!G.arena && !G.M.val) encircle(); }
 }
 // Encerclement : un anneau d’ennemis se referme sur le héros. Il faut trouver la faille.
 function encircle() {
@@ -1082,15 +1331,15 @@ function updateEnemies(dt) {
     if (e.T.regen && e.hp < e.maxHp) e.hp = Math.min(e.maxHp, e.hp + e.maxHp * e.T.regen * dt);
     // Les ennemis trop loin réapparaissent devant le héros (la pression ne retombe jamais).
     if (e.T.static) { updateNest(e, dt); continue; }
-    if (!e.boss && !e.T.flee && !e.guard && d2(e.x, e.y, h.x, h.y) > far * far) { const p = spawnPoint(); e.x = p.x; e.y = p.y; }
-    let spd = e.speed * (e.slowT > 0 ? 1 - e.slowP : 1) * (G.starfall > 0 ? .5 : 1) * (G.bloodMoon ? 1.35 : 1);
+    if (!e.boss && !e.T.flee && !e.guard && !e.tgtWard && d2(e.x, e.y, h.x, h.y) > far * far) { const p = spawnPoint(); e.x = p.x; e.y = p.y; }
+    let spd = e.speed * (e.slowT > 0 ? 1 - e.slowP : 1) * (G.starfall > 0 ? .5 : 1) * (G.bloodMoon ? 1.35 : 1) * (isNight() ? NIGHT.speed : 1);
     if (e.slowT > 0) e.slowT -= dt;
     if (e.mark > 0) e.mark -= dt;
     let mx = e.kx * dt, my = e.ky * dt;
     e.kx *= Math.pow(.02, dt); e.ky *= Math.pow(.02, dt);
     if (e.stun > 0) { e.stun -= dt; spd = 0; }
     // Cible : le héros (ou la caravane), sauf si un soldat de ton armée est plus proche.
-    let tg = e.tgtCart && G.cart ? G.cart : h;
+    let tg = e.tgtCart && G.cart ? G.cart : e.tgtWard && G.ward ? G.ward : h;
     if (G.allies.length && !e.T.flee) { const a = nearestAlly(e.x, e.y, 140); if (a && d2(a.x, a.y, e.x, e.y) < d2(tg.x, tg.y, e.x, e.y)) tg = a; }
     // Gardes (cage, fort) : ils ne quittent pas leur poste pour te poursuivre.
     if (e.guard && d2(tg.x, tg.y, e.guard.x, e.guard.y) > 320 * 320) { tg = e.post || (e.post = { x: e.guard.x + rand(-90, 90), y: e.guard.y + rand(-70, 70) }); if (d2(tg.x, tg.y, e.x, e.y) < 100) spd = 0; }
@@ -1104,7 +1353,10 @@ function updateEnemies(dt) {
       if (e.shotT <= 0) { e.shotT = e.T.ranged.cd; const sp = e.T.ranged.speed; G.eprojs.push({ x: e.x, y: e.y - 14, vx: dx / dd * sp, vy: dy / dd * sp, dmg: e.T.ranged.dmg * BAL.dmg(G.m), life: 2.4, r: 6, kind: 'fire' }); }
       if (dd < e.T.ranged.range * .6) spd *= .2;
     }
-    if (e.T.flee) { const f = fleeMove(e, dx, dy, dd, spd, dt); mx += f.x; my += f.y; } else { mx += dx / dd * spd * dt; my += dy / dd * spd * dt; }
+    // Sur la carte, la horde suit le champ de chemins vers le héros : elle contourne l’eau et les falaises.
+    let ux = dx / dd, uy = dy / dd;
+    if (tg === h && !e.fly && dd > 150) { const f = fieldDir(FLOW, e.x, e.y); if (f) { ux = f.x; uy = f.y; } }
+    if (e.T.flee) { const f = fleeMove(e, dx, dy, dd, spd, dt); mx += f.x; my += f.y; } else { mx += ux * spd * dt; my += uy * spd * dt; }
     if (!e.fly) {
       const cx = (e.x / GC) | 0, cy = (e.y / GC) | 0;
       for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) {
@@ -1112,11 +1364,13 @@ function updateEnemies(dt) {
         for (const o of c) { if (o === e || o.dead || o.fly) continue; const ox = e.x - o.x, oy = e.y - o.y, q = ox * ox + oy * oy, min = (e.r + o.r) * .8; if (q > 0 && q < min * min) { const d = Math.sqrt(q), k = (min - d) / d * .45; mx += ox * k; my += oy * k; } }
       }
     }
-    e.x = clamp(e.x + mx, 10, BAL.world.w - 10); e.y = clamp(e.y + my, 10, BAL.world.h - 10);
+    if (e.fly) { e.x += mx; e.y += my; } else moveBody(e, mx, my, Math.min(e.r, 14));
+    e.x = clamp(e.x, 10, BAL.world.w - 10); e.y = clamp(e.y, 10, BAL.world.h - 10);
     if (Math.abs(dx) > 2) e.face = Math.sign(dx);
     e.moving = Math.abs(mx) + Math.abs(my) > .05;
     if (hd < e.r + BAL.heroR && e.atkCd <= 0 && !(G.hide > 0)) { e.atkCd = .8; e.atk = .22; hurtHero(e.T.dmg * BAL.dmg(G.m) * (e.elite ? 1.6 : 1) * (e.charging ? 1.6 : 1)); }
     else if (tg === G.cart && dd < e.r + 26 && e.atkCd <= 0) { e.atkCd = .8; e.atk = .22; hitCart(e.T.dmg * BAL.dmg(G.m) * G.D.dmg); }
+    else if (tg === G.ward && dd < e.r + 34 && e.atkCd <= 0) { e.atkCd = .8; e.atk = .22; hitWard(e.T.dmg * BAL.dmg(G.m) * G.D.dmg * (e.elite ? 1.6 : 1)); }
     else if (tg.ally && dd < e.r + tg.r + 3 && e.atkCd <= 0) { e.atkCd = .8; e.atk = .22; hitAlly(tg, e.T.dmg * BAL.dmg(G.m) * G.D.dmg * (e.elite ? 1.6 : 1) * (e.boss ? 2 : 1)); }
     if (e.atk) e.atk = Math.max(0, e.atk - dt);
   }
@@ -1126,9 +1380,9 @@ function updateNest(e, dt) {
   if (e.T.cage) return;
   const h = G.hero;
   e.aiT -= dt;
-  if (e.aiT <= 0 && d2(e.x, e.y, h.x, h.y) < 1100 * 1100) {
-    e.aiT = 3;
-    for (let i = 0; i < 2; i++) spawnEnemy(G.m > 2 && Math.random() < .5 ? 'coureur' : 'rodeur', { x: e.x + rand(-34, 34), y: e.y + rand(10, 34) });
+  if (e.aiT <= 0 && d2(e.x, e.y, h.x, h.y) < (e.T.tent ? 900 : 1100) ** 2) {
+    e.aiT = e.T.tent ? 3.5 : 3;
+    for (let i = 0; i < (e.T.tent ? 1 : 2); i++) spawnEnemy(e.T.tent ? (Math.random() < .5 ? 'pillard' : 'rodeur') : G.m > 2 && Math.random() < .5 ? 'coureur' : 'rodeur', { x: e.x + rand(-34, 34), y: e.y + rand(30, 50) });
     ring(e.x, e.y, 50, '#c58cff', .4);
   }
   if (d2(e.x, e.y, h.x, h.y) < (e.r + BAL.heroR) ** 2 && e.atkCd <= 0) { e.atkCd = .8; hurtHero(e.T.dmg * BAL.dmg(G.m)); }
@@ -1182,16 +1436,17 @@ function updateEProjs(dt) {
 
 // ═════════════════════════ Héros ═════════════════════════
 function updateHero(dt) {
-  const h = G.hero, inp = moveInput(), m = G.mods, sp = m.speed * (G.fac === 'orcs' && G.waaagh > 0 ? 1.25 : 1) * (G.spin ? .85 : 1);
+  const h = G.hero, inp = moveInput(), m = G.mods, sp = m.speed * (G.fac === 'orcs' && G.waaagh > 0 ? 1.25 : 1) * (G.spin ? .85 : 1) * (hasR('noctambule') && isNight() ? 1.15 : 1);
   G.inv = Math.max(0, G.inv - dt);
   if (G.dash) { updateDash(dt); h.hurt = Math.max(0, h.hurt - dt); return; }
   h.vx = inp.x * sp; h.vy = inp.y * sp;
-  h.x = clamp(h.x + h.vx * dt, 20, BAL.world.w - 20); h.y = clamp(h.y + h.vy * dt, 30, BAL.world.h - 20);
+  moveBody(h, h.vx * dt, h.vy * dt, 10);
+  h.x = clamp(h.x, 20, BAL.world.w - 20); h.y = clamp(h.y, 30, BAL.world.h - 20);
   if (Math.abs(inp.x) > .1) h.face = Math.sign(inp.x);
   if (manualAim()) { const p = aimPoint(); if (Math.abs(p.x - h.x) > 4) h.face = Math.sign(p.x - h.x); }
   h.mv = Math.hypot(inp.x, inp.y) > .1 ? .1 : Math.max(0, h.mv - dt);
   h.hurt = Math.max(0, h.hurt - dt);
-  if (h.hp < h.maxHp) h.hp = Math.min(h.maxHp, h.hp + m.regen * dt);
+  if (h.hp < h.maxHp) h.hp = Math.min(h.maxHp, h.hp + (m.regen + (hasR('aube') && G.V && !isNight() ? 2 : 0)) * dt);
 }
 function hurtHero(d) {
   if (G.inv > 0 || G.god || G.over || G.deadT) return;
@@ -1213,6 +1468,7 @@ function dmgEnemy(e, amount, o = {}) {
   if (o.mark) e.mark = Math.max(e.mark || 0, o.mark);
   // Supernova sur un mangeur d’étoiles : triple dégâts, et il est aveuglé.
   if (o.nova && e.T.starEater) { dmg *= 2.5; if (e.boss && !(e.blind > 0)) { e.blind = 1.4; addText(e.x, e.y - 90, 'Aveuglé !', '#e8f2ff', 22, true); } }
+  if ((e.elite || e.boss) && hasR('oeil')) dmg *= 1.3;
   let crit = false;
   if (o.crit && Math.random() < o.crit) { dmg *= 2.5; crit = true; }
   e.hp -= dmg; e.flash = .07; G.stats.dmg += dmg;
@@ -1229,8 +1485,8 @@ function killEnemy(e, w) {
   if (w) w.kills++;
   const T = e.T, xp = T.xp * (e.elite ? BAL.eliteXp : 1);
   if (G.H.lifeOnKill && !G.deadT) G.hero.hp = Math.min(G.hero.maxHp, G.hero.hp + G.H.lifeOnKill); // Soif de sang (orcs)
-  drop(e.x, e.y, 'xp', xp * (G.bloodMoon ? 2 : 1));
-  if (Math.random() < BAL.coinChance || e.elite) drop(e.x + rand(-8, 8), e.y + rand(-8, 8), 'gold', e.elite ? 15 : Math.ceil(rand(1, 3)));
+  drop(e.x, e.y, 'xp', xp * (G.bloodMoon ? (G.V ? 1.25 : 2) : 1) * (G.V ? NIGHT.xp : 1));
+  if (Math.random() < (G.V ? NIGHT.coin : BAL.coinChance) || e.elite) drop(e.x + rand(-8, 8), e.y + rand(-8, 8), 'gold', e.elite ? 15 : Math.ceil(rand(1, 3)));
   if (e.elite) { drop(e.x + 14, e.y, 'chest', 1); drop(e.x - 14, e.y, 'cr', 1); }
   if (e.boss) { drop(e.x, e.y + 20, 'chest', 1); for (let i = 0; i < 3; i++) drop(e.x + rand(-30, 30), e.y + rand(-30, 30), 'cr', 1); }
   if (Math.random() < BAL.foodChance) drop(e.x, e.y, 'food', 30);
@@ -1294,6 +1550,14 @@ function collect(d) {
 }
 // Coffre : une amélioration gratuite tirée au hasard, plus de l’or.
 function openChest() {
+  // Lyriel : de l’or, des soins, et parfois une relique commune.
+  if (G.H.kit) {
+    const g = 15 + Math.round(6 * G.m), pool = Object.keys(RELICS).filter(k => RELICS[k].r === 1 && !G.relics[k]);
+    G.gold += g; G.hero.hp = Math.min(G.hero.maxHp, G.hero.hp + G.hero.maxHp * .15);
+    SFX.play('chest'); ring(G.hero.x, G.hero.y, 80, '#ffd76a', .6); sparkle(G.hero.x, G.hero.y - 30, '#ffd76a', 24);
+    if (pool.length && Math.random() < .35) giveRelic(pick(pool)); else toast(`Coffre : +${g}${NB}or et des soins`, 'gold');
+    return;
+  }
   const opts = offerPool().filter(o => o.kind === 'up' || o.kind === 'pass' || (o.kind === 'kit' && !TREE[o.b].cards[o.id].legend));
   const o = opts.length ? pick(opts) : null;
   const g = 25 + Math.round(10 * G.m);
@@ -1536,7 +1800,7 @@ function updateUlt(dt) {
 // Chaque sort a des charges (1, ou 2 avec Ruée sauvage) qui se rechargent une par une.
 const sdmg = base => base * BAL.spellScale(G.level) * G.mods.might;
 const hasTal = (sp, k) => !!sp.tal[k];
-const spellMax = sp => sp.id === 'etoile' ? STAR.charges : sp.id === 'paslunaire' ? 1 + tl('pas') : hasTal(sp, 'ruee') ? 2 : 1;
+const spellMax = sp => sp.id === 'etoile' ? STAR.charges + (hasR('astrolabe') ? 1 : 0) :sp.id === 'paslunaire' ? 1 + tl('pas') : hasTal(sp, 'ruee') ? 2 : 1;
 function spellCd(sp) {
   let cd = SPELLS[sp.id].cd * G.mods.spellCd;
   if (hasTal(sp, 'vent')) cd *= .5;
@@ -1626,7 +1890,8 @@ function blast(x, y, r, c) {
 function updateDash(dt) {
   const h = G.hero, d = G.dash, s = d.speed * dt;
   d.t -= dt;
-  h.x = clamp(h.x + d.dx * s, 20, BAL.world.w - 20); h.y = clamp(h.y + d.dy * s, 30, BAL.world.h - 20);
+  moveBody(h, d.dx * s, d.dy * s, 8);
+  h.x = clamp(h.x, 20, BAL.world.w - 20); h.y = clamp(h.y, 30, BAL.world.h - 20);
   if (Math.abs(d.dx) > .1) h.face = Math.sign(d.dx);
   h.mv = .1; G.inv = Math.max(G.inv, .06);
   // Images rémanentes
@@ -1647,7 +1912,7 @@ function updateDash(dt) {
       blast(h.x, h.y, 100, '#ff9b3d'); shake(7); hitstop(.06); SFX.play('slam');
       if (d.kills > 0 && d.sp.t > 0) { d.sp.t *= .4; addText(h.x, h.y - 70, 'Sauvagerie !', '#ff9b3d', 20, true); }
     } else sparkle(h.x, h.y - 20, '#cbb8ff', 12);
-    if (d.kind === 'lune') { if (d.crossed) supernova(true); if (tl('eclipse')) { G.hide = 1.2; G.critNext = true; } }
+    if (d.kind === 'lune') { if (d.crossed) supernova(true); if (tl('eclipse')) { G.hide = 1.2; G.critNext = true; } if (hasR('miroir')) plantStar(h.x, h.y); }
     G.dash = null;
   }
 }
@@ -1697,7 +1962,7 @@ function placeAway(minD, maxD, avoid = []) {
   for (let k = 0; k < 60; k++) {
     const a = rand(0, TAU), d = rand(minD, maxD), x = h.x + Math.cos(a) * d, y = h.y + Math.sin(a) * d * .8;
     if (x < 180 || y < 180 || x > w - 180 || y > wh - 180) continue;
-    if (avoid.some(o => d2(o.x, o.y, x, y) < 300 * 300)) continue;
+    if (avoid.some(o => d2(o.x, o.y, x, y) < 300 * 300) || !walkable(x, y)) continue;
     return { x, y };
   }
   return { x: clamp(h.x + rand(-1, 1) * maxD, 180, w - 180), y: clamp(h.y + rand(-1, 1) * maxD * .6, 180, wh - 180) };
@@ -1705,6 +1970,7 @@ function placeAway(minD, maxD, avoid = []) {
 function updateMission(dt) {
   const ms = G.mis;
   if (!G.started || G.finalDown) return;
+  if (G.V) { updateVal(dt); return; }
   if (G.M.events) { updateEvents(dt); return; }
   if (ms.phase === 'wait') { ms.t -= dt; if (ms.t <= 0) startObjective(); return; }
   if (ms.phase === 'obj') { updateObjective(ms.obj, dt); if (ms.obj.done) completeObjective(); }
@@ -1785,6 +2051,7 @@ function completeObjective() {
 }
 // Cibles d’objectif, pour les flèches au bord de l’écran.
 function objectiveTargets() {
+  if (G.V) return valTargets();
   if (G.M.events) { const ev = G.event; return ev && ev.k === 'herauts' ? ev.list.filter(e => !e.dead) : []; }
   const o = G.mis.obj, out = [];
   if (!o) return out;
@@ -1951,12 +2218,12 @@ function drawCage(e, t) {
 // ═════════════════════════ Lyriel : étoiles et constellations ═════════════════════════
 const tl = k => G.kit.tal[k] || 0;                        // niveau d’un talent de l’arbre
 const starMax = () => (G.vault > 0 ? 6 : STAR.max + tl('ourse'));
-const starLife = () => STAR.life * (1 + .5 * tl('tenaces')) * G.mods.dur;
-const kdmg = base => base * BAL.spellScale(G.level) * G.mods.might;
+const starLife = () => STAR.life * (1 + .5 * tl('tenaces')) * G.mods.dur + (isNight() ? NIGHT.life : 0) + (hasR('larme') ? 4 : 0);
+const kdmg = base => base * BAL.spellScale(G.level) * G.mods.might * dynMight();
 // Flèches lunaires : stats calculées depuis l’arbre (plus d’armes génériques).
 function kitArrow(s) {
   const A = STAR.arrow;
-  return { ...s, dmg: A.dmg * (1 + .2 * tl('lunaires')) * (1 + .11 * (G.level - 1)) * G.mods.might, cd: Math.max(.18, A.cd / (1 + .15 * tl('rapide')) * G.mods.cd), n: A.n + tl('volee'), pierce: A.pierce + 2 * tl('lunaires'), speed: A.speed, aim: true, size: 8, life: 1 };
+  return { ...s, dmg: A.dmg * (1 + .2 * tl('lunaires')) * (1 + .11 * (G.level - 1)) * G.mods.might * dynMight() * (hasR('carquois') ? 1.15 : 1), cd: Math.max(.18, A.cd / (1 + .15 * tl('rapide')) * G.mods.cd), n: A.n + tl('volee'), pierce: A.pierce + 2 * tl('lunaires') + (hasR('carquois') ? 1 : 0), speed: A.speed, aim: true, size: 8, life: 1 };
 }
 // Comète de l’Étoile filante : vole jusqu’au point visé, frappe, puis l’étoile naît.
 function shootStar(x, y) {
@@ -1966,12 +2233,17 @@ function shootStar(x, y) {
 }
 function plantStar(x, y, free) {
   x = clamp(x, 20, BAL.world.w - 20); y = clamp(y, 20, BAL.world.h - 20);
-  G.stars.push({ x, y, t: 0, life: starLife(), id: G.nid++, pop: .3, free });
-  while (G.stars.length > starMax()) G.stars.shift();
-  forNear(x, y, 50, e => dmgEnemy(e, kdmg(STAR.impact), { w: G.spellW, magic: true, kb: 4, fx: x, fy: y }));
+  const q = anchorFor(x, y); if (q) { x = q.x; y = q.y; }
+  const s = { x, y, t: 0, life: starLife(), id: G.nid++, pop: .3, free };
+  if (q) { s.anchor = q; q.star = s; sparkle(x, y - 10, '#ffd76a', 10); }
+  G.stars.push(s);
+  trimStars();
+  forNear(x, y, 50, e => dmgEnemy(e, kdmg(STAR.impact) * starK(),{ w: G.spellW, magic: true, kb: 4, fx: x, fy: y }));
   ring(x, y, 46, '#cfe6ff', .35); sparkle(x, y - 6, '#cfe6ff', 6); addLight(x, y, 160, '#cfe6ff', .8, .3);
   SFX.play('ready');
 }
+// Les étoiles accrochées à un socle de phare ne comptent pas dans la limite.
+function trimStars() { while (G.stars.filter(s => !s.anchor).length > starMax()) { const i = G.stars.findIndex(s => !s.anchor); if (i < 0) break; G.stars.splice(i, 1); } }
 // Constellation = enveloppe convexe des étoiles (au moins 3).
 function hull(pts) {
   if (pts.length < 3) return [];
@@ -1993,12 +2265,13 @@ function starLinks() {
 }
 function supernova(byDash) {
   const S = G.stars; if (!S.length) return;
-  const k = 1 + .35 * tl('nova'), H = G.hull, area = H.length >= 3 ? polyArea(H) : 0, cx = S.reduce((a, s) => a + s.x, 0) / S.length, cy = S.reduce((a, s) => a + s.y, 0) / S.length;
+  const k = (1 + .35 * tl('nova')) * (hasR('couronne') ? 1.5 : 1) * starK(), H = G.hull, area = H.length >= 3 ? polyArea(H) : 0, cx = S.reduce((a, s) => a + s.x, 0) / S.length, cy = S.reduce((a, s) => a + s.y, 0) / S.length;
   for (const s of S) { forNear(s.x, s.y, STAR.novaR * k, e => dmgEnemy(e, kdmg(STAR.nova) * k, { w: G.spellW, magic: true, kb: 10, fx: s.x, fy: s.y, stun: .5, nova: byDash })); blast(s.x, s.y, STAR.novaR * k, '#cfe6ff'); }
   if (H.length >= 3) { for (const e of G.enemies) if (!e.dead && inPoly(e.x, e.y, H)) dmgEnemy(e, kdmg(STAR.nova) * k * (1 + Math.min(2, area / 90000)), { w: G.spellW, magic: true, nova: byDash, quiet: Math.random() < .5 }); ring(cx, cy, Math.sqrt(area) * .7, '#ffffff', .6); addLight(cx, cy, Math.sqrt(area) * 1.6 + 200, '#e8f2ff', 1, .6); }
   shake(10); hitstop(.08); SFX.play('slam'); SFX.play('evolve');
   addText(cx, cy - 40, 'Supernova !', '#e8f2ff', 24, true);
   G.stats.novas = (G.stats.novas || 0) + 1;
+  if (hasR('faucille')) G.ult.v = Math.min(G.ult.need, G.ult.v + G.ult.need * .2);
   if (tl('berger')) { const sp = G.spells[0]; sp.ammo = spellMax(sp); sp.t = 0; G.hero.hp = Math.min(G.hero.maxHp, G.hero.hp + G.hero.maxHp * .15); }
   if (byDash) { const d = G.spells[1]; d.ammo = Math.min(spellMax(d), d.ammo + 1); }
   G.stars = []; G.hull = [];
@@ -2009,15 +2282,15 @@ function updateStars(dt) {
   // Comètes en vol
   for (const c of G.comets) { c.t += dt; if (c.t >= c.T && !c.done) { c.done = true; plantStar(c.x, c.y); } }
   G.comets = G.comets.filter(c => !c.done);
-  for (const s of G.stars) { s.t += dt; s.pop = Math.max(0, s.pop - dt); }
+  for (const s of G.stars) { if (!s.anchor) s.t += dt; s.pop = Math.max(0, s.pop - dt); }
   G.stars = G.stars.filter(s => s.t < s.life);
-  while (G.stars.length > starMax()) G.stars.shift();
+  trimStars();
   G.hull = hull(G.stars);
   // Pluie d’astres et fils d’argent
   G.starTick -= dt;
   if (G.hull.length >= 3 && G.starTick <= 0) {
     G.starTick = STAR.tick;
-    const H = G.hull, links = starLinks(), rain = kdmg(STAR.rain) * (1 + .4 * tl('poussiere')) * (G.vault > 0 ? 1.5 : 1), line = kdmg(STAR.line) * (1 + .6 * tl('fils'));
+    const H = G.hull, links = starLinks(), rain = kdmg(STAR.rain) * (1 + .4 * tl('poussiere')) * (G.vault > 0 ? 1.5 : 1) * starK(), line = kdmg(STAR.line) * (1 + .6 * tl('fils')) * starK();
     const cx = H.reduce((a, s) => a + s.x, 0) / H.length, cy = H.reduce((a, s) => a + s.y, 0) / H.length;
     for (const e of G.enemies) {
       if (e.dead) continue;
@@ -2078,7 +2351,7 @@ function updateEvents(dt) {
   const ev = G.event;
   if (ev && ev.k !== 'boss') {
     ev.t -= dt;
-    if (ev.k === 'chute') { ev.spawn -= dt; if (ev.spawn <= 0 && ev.n < ev.max) { ev.spawn = .45; ev.n++; const h = G.hero, a = rand(0, TAU), r = rand(120, 560), x = clamp(h.x + Math.cos(a) * r, 40, BAL.world.w - 40), y = clamp(h.y + Math.sin(a) * r * .8, 40, BAL.world.h - 40); G.meteors.push({ x, y, t: -.9, T: .5, r: 60, dmg: kdmg(30), w: G.spellW, kind: 'astre' }); G.tele.push({ k: 'circle', x, y, r: 60, t: 0, T: 1.4, ally: true }); } }
+    if (ev.k === 'chute') { ev.spawn -= dt; if (ev.spawn <= 0 && ev.n < ev.max) { ev.spawn = .45; ev.n++; const h = G.hero, a = rand(0, TAU), r = rand(120, 560), x = clamp(h.x + Math.cos(a) * r, 40, BAL.world.w - 40), y = clamp(h.y + Math.sin(a) * r * .8, 40, BAL.world.h - 40); if (walkable(x, y)) { G.meteors.push({ x, y, t: -.9, T: .5, r: 60, dmg: kdmg(30), w: G.spellW, kind: 'astre' }); G.tele.push({ k: 'circle', x, y, r: 60, t: 0, T: 1.4, ally: true }); } } }
     if (ev.k === 'herauts' && ev.list.every(e => e.dead)) ev.t = 0;
     if (ev.t <= 0) { if (ev.k === 'lune') { G.bloodMoon = false; toast('La lune de sang pâlit.', 'info'); } G.event = null; }
   }
@@ -2089,15 +2362,15 @@ function startEvent(k) {
   const E = EVENTS[k], h = G.hero;
   banner(E.name, k === 'boss' ? 'Boss final' : 'Événement', k === 'boss' ? 'boss' : 'surge'); SFX.play(k === 'boss' ? 'boss' : 'warn'); toast(E.desc, 'info');
   if (k === 'chute') G.event = { k, t: 9, spawn: 0, n: 0, max: 14 + Math.floor(G.m * 2) };
-  else if (k === 'lune') { G.event = { k, t: 30 }; G.bloodMoon = true; }
+  else if (k === 'lune') { G.event = { k, t: G.V ? 88 : 30 }; G.bloodMoon = true; }
   else if (k === 'herauts') {
     const list = []; for (let i = 0; i < 3; i++) { const p = placeAway(420, 620, list); list.push(spawnEnemy('heraut', { ...p, elite: true })); }
     G.event = { k, t: 75, list };
   } else if (k === 'boss') {
     // Arène : on ne peut plus fuir. La horde se calme, le Dévoreur descend.
     const { w, h: wh } = BAL.world;
-    G.arena = { x: clamp(h.x, 600, w - 600), y: clamp(h.y, 520, wh - 520), r: 560 };
-    const e = spawnEnemy(G.M.boss, { x: G.arena.x, y: G.arena.y - 380 }); e.final = true; e.phase = 1;
+    G.arena = G.V ? { x: VAL.obs.x, y: VAL.obs.y, r: 520 } : { x: clamp(h.x, 600, w - 600), y: clamp(h.y, 520, wh - 520), r: 560 }; G.bloodMoon = false;
+    const e = spawnEnemy(G.M.boss, { x: G.arena.x, y: G.arena.y - 380 }); e.final = true; e.phase = 1; if (G.V) e.maxHp = e.hp = e.hp * PHARE.bossHp; if (G.V && G.V.lit) { e.maxHp = e.hp = e.hp * (1 - PHARE.bossCut * G.V.lit); toast(`Tes ${G.V.lit} phare${G.V.lit > 1 ? 's' : ''} affaibli${G.V.lit > 1 ? 'ssent' : 't'} le Dévoreur.`, 'gold'); }
     G.event = { k, t: 1e9, boss: e };
     shake(10);
   }
@@ -2158,13 +2431,470 @@ function updateWells(dt) {
   for (const w of G.wells) {
     w.t += dt; w.tick -= dt;
     const dx = w.x - h.x, dy = w.y - h.y, d = Math.hypot(dx, dy) || 1;
-    if (d < 340 && !G.dash) { const k = 95 * (1 - d / 340) + 25; h.x += dx / d * k * dt; h.y += dy / d * k * dt; }
+    if (d < 340 && !G.dash) { const k = 95 * (1 - d / 340) + 25; moveBody(h, dx / d * k * dt, dy / d * k * dt, 10); }
     forNear(w.x, w.y, 300, e => { if (e.boss) return; const ex = w.x - e.x, ey = w.y - e.y, ed = Math.hypot(ex, ey) || 1; e.x += ex / ed * 70 * dt; e.y += ey / ed * 70 * dt; });
     if (w.tick <= 0) { w.tick = .45; if (d < 58) hurtHero(10 * BAL.dmg(G.m)); forNear(w.x, w.y, 58, e => { if (!e.boss) dmgEnemy(e, kdmg(20), { quiet: true }); }); }
   }
   G.wells = G.wells.filter(w => w.t < w.T);
   // Arène : on ne peut pas en sortir
   if (G.arena) { const a = G.arena, dx = h.x - a.x, dy = h.y - a.y, d = Math.hypot(dx, dy); if (d > a.r - 18) { h.x = a.x + dx / d * (a.r - 18); h.y = a.y + dy / d * (a.r - 18); } }
+}
+// ═════════════════════════ Le Val d’Astrée : cycle, quêtes, reliques, colporteur, arbre ═════════════════════════
+const isNight = () => !!(G && G.V && CYCLE[G.V.ci].k !== 'jour');
+const hasR = id => !!(G && G.relics && G.relics[id]);
+const starK = () => (isNight() ? NIGHT.star : 1);                       // la nuit, les étoiles frappent plus fort
+const dynMight = () => (hasR('noctambule') && isNight() ? 1.3 : 1);
+function newVal() {
+  return {
+    ci: 0, ct: 0, night: 0, region: null, seenReg: {}, revealT: 0, near: null, shop: null, done: 0, lit: 0, eclipse: false, herauts: false,
+    phares: VAL.phares.map(p => ({ ...p, st: 'idle', charge: 0, held: 0, spawnT: 0, herald: 0,
+      peds: [0, 1, 2].map(i => { const a = -Math.PI / 2 + i / 3 * TAU; return { x: p.x + Math.cos(a) * PHARE.pedR, y: p.y + Math.sin(a) * PHARE.pedR * .8, star: null }; }) })),
+    hameau: { st: 'idle', t: 0, spawn: 0 }, camp: { st: 'idle', list: [] }, chef: { st: 'idle', boss: null }, nests: [],
+    menhirs: VAL.menhirs.map(([x, y]) => ({ x, y, got: false })),
+  };
+}
+// Lieux dessinés et triés en profondeur avec les unités.
+function valPois(V) {
+  const out = V.phares.map(p => ({ k: 'phare', x: p.x, y: p.y, p }));
+  for (const m of V.menhirs) out.push({ k: 'menhir', x: m.x, y: m.y, m });
+  out.push({ k: 'shop', x: VAL.merchant.x, y: VAL.merchant.y }, { k: 'hearth', x: VAL.hameau.x, y: VAL.hameau.y + 10 }, { k: 'astro', x: VAL.obs.x, y: VAL.obs.y });
+  const H = VAL.hameau;
+  for (const [dx, dy, f, look] of [[-120, 70, 1, 'villageois'], [110, 60, -1, 'villageoise'], [-40, 150, 1, 'villageoise'], [170, -40, -1, 'villageois']]) out.push({ k: 'npc', x: H.x + dx, y: H.y + dy, f, look });
+  return out;
+}
+function updateVal(dt) {
+  const V = G.V, h = G.hero;
+  V.revealT -= dt;
+  if (V.revealT <= 0) {
+    V.revealT = .2; reveal(h.x, h.y, 720);
+    const r = regionAt(h.x, h.y);
+    if (r !== V.region) { V.region = r; if (r && !V.seenReg[r.id]) { V.seenReg[r.id] = true; if (G.started && G.t > 3) { banner(r.name, 'Région découverte', ''); addXp(4 + G.level); } } }
+  }
+  updateEvents(dt);
+  if (!G.started || G.finalDown) return;
+  updateCycle(dt);
+  updatePhares(dt); updateHameau(dt); updateCamp(); updateChef(); updateMenhirs();
+  for (const e of V.nests) if (e.dead && !e.paid) { e.paid = true; drop(e.x, e.y, 'chest', 1); G.gold += 20; addXp(10 + G.level); toast('Nid de cendres détruit : un coffre !', 'gold'); }
+  V.near = d2(h.x, h.y, VAL.merchant.x, VAL.merchant.y) < 120 * 120 ? 'shop' : null;
+  if (V.eclipse && !G.arena && d2(h.x, h.y, VAL.obs.x, VAL.obs.y) < 380 * 380) startEvent('boss');
+}
+// Jour 1 → Nuit 1 (chute d’étoiles, hérauts) → Jour 2 → Nuit 2 (lune de sang) → l’Éclipse.
+function updateCycle(dt) {
+  const V = G.V, P = CYCLE[V.ci];
+  V.ct += dt;
+  if (V.ct >= P.T) { V.ct -= P.T; V.ci++; enterPhase(CYCLE[V.ci]); }
+  V.night = clamp(V.night + clamp((CYCLE[V.ci].k === 'jour' ? 0 : 1) - V.night, -dt / 5, dt / 5), 0, 1);
+  const Q = CYCLE[V.ci];
+  if (Q.k === 'nuit' && Q.n === 1 && !V.herauts && V.ct > 40 && !G.event) { V.herauts = true; startEvent('herauts'); }
+}
+function enterPhase(P) {
+  const V = G.V;
+  if (P.k === 'nuit') { banner(`Nuit ${P.n}`, 'Tes étoiles brillent plus fort… la horde aussi', 'surge'); SFX.play('warn'); startEvent(P.n === 1 ? 'chute' : 'lune'); spawnNests(2); }
+  else if (P.k === 'jour') { G.bloodMoon = false; banner(`Jour ${P.n}`, 'L’aube te rend des forces', 'ult'); SFX.play('ready'); G.hero.hp = Math.min(G.hero.maxHp, G.hero.hp + G.hero.maxHp * .2); if (V.shop) { restock(); toast('Le colporteur a de nouvelles marchandises.', 'gold'); } spawnNests(2); }
+  else { V.eclipse = true; G.bloodMoon = false; G.event = null; banner('L’Éclipse', 'Rejoins l’Observatoire, au nord', 'boss'); SFX.play('boss'); toast(`Le Dévoreur descend sur l’Observatoire. Phares rallumés : ${V.lit} sur 3, il perd ${Math.round(V.lit * PHARE.bossCut * 100)}${NB}% de PV.`, 'info'); }
+}
+// Nids de cendres : à chaque aube et à chaque nuit, deux nids percent loin du héros (butin : un coffre).
+function spawnNests(n) {
+  const V = G.V, h = G.hero; let made = 0;
+  for (let k = 0; k < n; k++) for (let tries = 0; tries < 60; tries++) {
+    const x = rand(400, BAL.world.w - 400), y = rand(400, BAL.world.h - 400), d = dist(x, y, h.x, h.y);
+    if (d < 900 || d > 2400 || !walkable(x, y) || dist(x, y, VAL.obs.x, VAL.obs.y) < 650 || V.nests.some(e => !e.dead && dist(x, y, e.x, e.y) < 700) || V.phares.some(p => dist(x, y, p.x, p.y) < 400)) continue;
+    const e = spawnEnemy('nid', { x, y }); e.nest = true; V.nests.push(e); made++; break;
+  }
+  if (made) toast(`${made} nid${made > 1 ? 's' : ''} de cendres ${made > 1 ? 'ont' : 'a'} percé dans le val (voir la carte) : détruis-les pour leur butin.`, 'info');
+}
+// ── Quête principale : les Phares d’Astrée ──
+function updatePhares(dt) {
+  const V = G.V, h = G.hero;
+  for (const p of V.phares) {
+    if (p.st === 'lit') continue;
+    if (p.st === 'idle') {
+      if (d2(h.x, h.y, p.x, p.y) > 560 * 560) continue;
+      p.st = 'awake'; banner(p.name, 'Plante tes étoiles sur les trois socles', 'surge'); SFX.play('warn');
+      const n = 6 + Math.floor(G.m * 1.5);
+      for (let i = 0; i < n; i++) { const a = rand(0, TAU), r = rand(130, 280), x = p.x + Math.cos(a) * r, y = p.y + Math.sin(a) * r * .8; if (!walkable(x, y)) continue; const g = spawnEnemy(G.m > 3 && i % 3 === 0 ? 'brute' : i % 2 ? 'pillard' : 'rodeur', { x, y }); g.guard = { x: p.x, y: p.y }; }
+      const el = spawnEnemy('brute', { x: p.x + 70, y: p.y + 80, elite: true }); el.guard = { x: p.x, y: p.y };
+    }
+    for (const q of p.peds) if (q.star && !G.stars.includes(q.star)) q.star = null;
+    p.held = p.peds.filter(q => q.star).length;
+    if (p.held === 3) {
+      if (p.st !== 'ritual') { p.st = 'ritual'; banner('Le rituel commence', 'Protège tes trois étoiles', 'surge'); SFX.play('evolve'); }
+      p.charge += dt / PHARE.ritual;
+      p.spawnT -= dt;
+      if (p.spawnT <= 0) { p.spawnT = 2.2; const a = rand(0, TAU); for (let i = 0; i < 5 + Math.floor(G.m / 2); i++) { const x = p.x + Math.cos(a) * 560 + rand(-70, 70), y = p.y + Math.sin(a) * 440 + rand(-70, 70); if (walkable(x, y)) spawnEnemy(pickType(G.m), { x, y }); } }
+      if (p.herald < 2 && p.charge > .3 + .4 * p.herald) { p.herald++; const a = rand(0, TAU), x = p.x + Math.cos(a) * 480, y = p.y + Math.sin(a) * 380; spawnEnemy('heraut', walkable(x, y) ? { x, y } : { x: p.x, y: p.y - 420 }); toast('Un héraut vient dévorer tes étoiles !', 'bad'); }
+      if (p.charge >= 1) lightPhare(p);
+    } else if (p.st === 'ritual') p.charge = Math.max(0, p.charge - dt / 40);
+  }
+}
+// Une étoile plantée près d’un socle libre s’y accroche : elle ne vieillit plus et ne compte pas dans ta limite.
+function anchorFor(x, y) {
+  if (!G.V) return null;
+  for (const p of G.V.phares) if (p.st === 'awake' || p.st === 'ritual') for (const q of p.peds) if (!q.star && d2(x, y, q.x, q.y) < PHARE.snap * PHARE.snap) return q;
+  return null;
+}
+function lightPhare(p) {
+  const V = G.V; p.st = 'lit'; p.charge = 1; V.lit++; V.done++;
+  for (const q of p.peds) { if (q.star) { q.star.anchor = null; q.star.t = 0; } q.star = null; }
+  banner('Phare rallumé !', `${V.lit} sur 3 · le Dévoreur perd ${Math.round(PHARE.bossCut * 100)}${NB}% de PV`, 'ult'); SFX.play('evolve'); shake(10); hitstop(.1);
+  forNear(p.x, p.y, 420, e => { if (!e.boss) dmgEnemy(e, kdmg(70), { w: G.spellW, magic: true, kb: 14, fx: p.x, fy: p.y, stun: .8 }); });
+  ring(p.x, p.y, 420, '#cfe6ff', .9); addLight(p.x, p.y, 900, '#e8f2ff', 1, 1.2); sparkle(p.x, p.y - 130, '#e8f2ff', 40);
+  G.hero.hp = Math.min(G.hero.maxHp, G.hero.hp + G.hero.maxHp * .3);
+  G.mis.runes += BAL.runes.objective; addXp(30 + 4 * G.level);
+  G.relicQ.push([0, .5, 2, 1]);
+}
+// ── Quêtes secondaires ──
+function updateHameau(dt) {
+  const Q = G.V.hameau, h = G.hero, P = VAL.hameau;
+  if (Q.st === 'idle' && d2(h.x, h.y, P.x, P.y) < 420 * 420) {
+    Q.st = 'defend'; Q.t = 40;
+    G.ward = { x: P.x, y: P.y + 10, r: 30, hurt: 0, hp: 0, maxHp: 0 }; G.ward.maxHp = G.ward.hp = 900 * (1 + .12 * G.m) * G.D.hp;
+    banner('Défends le hameau !', 'Garde le feu allumé 40 secondes', 'surge'); SFX.play('warn');
+  }
+  if (Q.st !== 'defend') return;
+  const w = G.ward; Q.t -= dt; w.hurt = Math.max(0, w.hurt - dt); Q.spawn -= dt;
+  if (Q.spawn <= 0) { Q.spawn = 1.4; const a = rand(0, TAU); for (let i = 0; i < 3 + Math.floor(G.m / 3); i++) { const x = P.x + Math.cos(a) * 640 + rand(-80, 80), y = P.y + Math.sin(a) * 480 + rand(-80, 80); if (walkable(x, y)) spawnEnemy(pickType(G.m), { x, y }).tgtWard = true; } }
+  const end = ok => { G.ward = null; for (const e of G.enemies) e.tgtWard = false; Q.st = ok ? 'done' : 'fail'; };
+  if (w.hp <= 0) { end(false); banner('Le hameau a brûlé', 'Quête échouée', 'boss'); SFX.play('lose'); return; }
+  if (Q.t <= 0) {
+    end(true); G.V.done++; banner('Hameau sauvé !', 'Les villageois te soignent et te récompensent', 'ult'); SFX.play('evolve');
+    G.hero.hp = G.hero.maxHp; G.gold += 60; G.mis.runes += BAL.runes.objective; addXp(25 + 3 * G.level); G.relicQ.push([0, 2, 1.2, .3]);
+  }
+}
+function hitWard(d) { const w = G.ward; if (!w || G.over) return; w.hp -= d; w.hurt = .15; }
+function updateCamp() {
+  const Q = G.V.camp, h = G.hero, P = VAL.camp;
+  if (Q.st === 'idle' && d2(h.x, h.y, P.x, P.y) < 620 * 620) {
+    Q.st = 'fight'; banner('Le Camp des Pillards', 'Rase les tentes, abats le chef', 'surge'); SFX.play('warn');
+    for (let i = 0; i < 3; i++) { const a = -Math.PI / 2 + i / 3 * TAU; Q.list.push(spawnEnemy('tente', { x: P.x + Math.cos(a) * 180, y: P.y + Math.sin(a) * 140 })); }
+    const c = spawnEnemy('pillard', { x: P.x, y: P.y + 10, elite: true }); c.maxHp = c.hp = c.hp * 4; c.guard = { x: P.x, y: P.y }; c.chief = true; Q.list.push(c);
+    for (let i = 0; i < 8 + G.m; i++) { const a = rand(0, TAU), r = rand(60, 230), x = P.x + Math.cos(a) * r, y = P.y + Math.sin(a) * r * .8; if (walkable(x, y)) spawnEnemy(i % 3 ? 'pillard' : 'rodeur', { x, y }).guard = { x: P.x, y: P.y }; }
+  }
+  if (Q.st === 'fight' && Q.list.every(e => e.dead)) {
+    Q.st = 'done'; G.V.done++; banner('Camp rasé !', 'Le butin des pillards est à toi', 'ult'); SFX.play('evolve');
+    drop(P.x, P.y, 'chest', 1); G.gold += 80; G.mis.runes += BAL.runes.objective; addXp(25 + 3 * G.level); G.relicQ.push([0, 1.5, 1.5, .4]);
+  }
+}
+function updateChef() {
+  const Q = G.V.chef, h = G.hero, P = VAL.lair;
+  if (Q.st === 'idle' && d2(h.x, h.y, P.x, P.y) < 640 * 640) {
+    Q.st = 'fight'; const e = spawnEnemy('boss1', { x: P.x, y: P.y }); e.maxHp = e.hp = 4000 * (1 + .3 * G.m) * G.D.hp; e.guard = { x: P.x, y: P.y }; Q.boss = e;
+    banner(ENEMIES.boss1.name, 'Le maître des Hauts', 'boss'); SFX.play('boss'); shake(6);
+  }
+  if (Q.st === 'fight' && Q.boss.dead) { Q.st = 'done'; G.V.done++; G.talentPts++; G.wantTree = true; banner('Le Chef de guerre est tombé', '+1 point de talent', 'ult'); addXp(40 + 4 * G.level); G.relicQ.push([0, 0, .5, 2]); }
+}
+function updateMenhirs() {
+  const h = G.hero;
+  for (const m of G.V.menhirs) {
+    if (m.got || d2(h.x, h.y, m.x, m.y) > 64 * 64) continue;
+    m.got = true; G.talentPts++; G.wantTree = true;
+    banner('Menhir de lune', `+1 point de talent · ${G.V.menhirs.filter(o => o.got).length} sur 6`, 'ult'); SFX.play('evolve');
+    sparkle(m.x, m.y - 40, '#9fc8ff', 30); ring(m.x, m.y, 90, '#9fc8ff', .6);
+  }
+}
+// ── Reliques ──
+function rollRelics(w) {
+  const pool = Object.keys(RELICS).filter(k => !G.relics[k]), out = [];
+  while (out.length < 3 && pool.length) {
+    const tot = pool.reduce((s, k) => s + (w[RELICS[k].r] || 0), 0); if (tot <= 0) break;
+    let x = Math.random() * tot, p = pool[0];
+    for (const k of pool) { x -= w[RELICS[k].r] || 0; if (x <= 0) { p = k; break; } }
+    out.push(p); pool.splice(pool.indexOf(p), 1);
+  }
+  return out.map(id => ({ kind: 'relic', id, title: RELICS[id].name }));
+}
+function openRelics(w) {
+  const offer = rollRelics(w);
+  if (!offer.length) { G.gold += 100; toast('Plus de reliques à trouver : +100 or', 'gold'); return; }
+  G.modal = 'cards'; G.offer = offer; joy.on = false; keys.clear();
+  renderCards(); $('#scr-cards').hidden = false; SFX.play('level');
+}
+function giveRelic(id) {
+  G.relics[id] = true; recomputeMods(); renderSlots(); renderSpells();
+  const R = RELICS[id]; toast(`${R.icon} ${R.name} : ${R.desc}`, 'evo');
+  if (R.r === 3) banner(R.name, 'Relique légendaire', 'ult');
+}
+// ── Le colporteur ──
+function restock() {
+  const items = [];
+  for (const r of [1, 2, 3]) { const ids = Object.keys(RELICS).filter(k => RELICS[k].r === r && !G.relics[k]); if (ids.length) items.push({ kind: 'relic', id: pick(ids), price: RARITY[r].price }); }
+  items.push({ kind: 'potion', price: 40 }, { kind: 'savoir', price: 150 });
+  G.V.shop = { items };
+}
+function openShop() {
+  if (!G.V || G.V.near !== 'shop' || G.modal || G.over) return;
+  if (!G.V.shop) restock();
+  G.modal = 'shop'; joy.on = false; keys.clear(); renderShop(); $('#scr-shop').hidden = false; SFX.play('card');
+}
+function closeShop() { if (G.modal !== 'shop') return; G.modal = null; $('#scr-shop').hidden = true; }
+function shopInfo(it) {
+  if (it.kind === 'relic') { const R = RELICS[it.id]; return { rc: RARITY[R.r].c, top: RARITY[R.r].name, ic: R.icon, name: R.name, desc: R.desc }; }
+  if (it.kind === 'potion') return { rc: '#9be38a', top: 'Consommable', ic: '🧪', name: 'Potion de sève', desc: 'Rend 50 % de tes PV.' };
+  return { rc: 'var(--epic)', top: 'Savoir', ic: '📜', name: 'Parchemin d’astronomie', desc: '+1 point de talent.' };
+}
+function renderShop() {
+  $('#shop-gold').innerHTML = `<i class="coin"></i> ${fmt(G.gold)}`;
+  const box = $('#shop-cards'); box.innerHTML = '';
+  G.V.shop.items.forEach((it, i) => {
+    const c = shopInfo(it), el = document.createElement('button');
+    el.type = 'button'; el.className = 'card'; el.style.setProperty('--rc', c.rc); el.disabled = !!it.sold || G.gold < it.price;
+    el.innerHTML = `<span class="c-top"><span>${c.top}</span></span><span class="c-ic" aria-hidden="true">${c.ic}</span><span class="c-name">${fr(c.name)}</span><span class="c-desc">${fr(c.desc)}</span><span class="c-stack">${it.sold ? 'Vendu' : `<i class="coin" style="width:.75rem;height:.75rem;vertical-align:-.1rem"></i> ${it.price}`}</span><kbd>${i + 1}</kbd>`;
+    el.addEventListener('click', () => buy(i));
+    box.appendChild(el);
+  });
+}
+function buy(i) {
+  const it = G.V.shop && G.V.shop.items[i]; if (!it || it.sold || G.gold < it.price) { SFX.play('deny'); return; }
+  G.gold -= it.price; SFX.play('coin');
+  if (it.kind === 'relic') { it.sold = true; giveRelic(it.id); }
+  else if (it.kind === 'potion') { G.hero.hp = Math.min(G.hero.maxHp, G.hero.hp + G.hero.maxHp * .5); SFX.play('heal'); }
+  else { it.sold = true; G.talentPts++; toast('+1 point de talent (T pour ouvrir l’arbre)', 'evo'); }
+  renderShop();
+}
+// ── Arbre de talents (écran dédié, les points se dépensent librement) ──
+function nodeState(b, k) {
+  const C = TREE[b].cards[k], max = C.legend ? 1 : C.max;
+  return tl(k) >= max ? 'max' : G.kit.branch[b] >= TIER_NEED[TIERS[k]] ? 'avail' : 'locked';
+}
+function openTree(auto) {
+  if (!G.H.kit || G.modal) return;
+  G.modal = 'tree'; joy.on = false; keys.clear();
+  $('#tree-detail').innerHTML = 'Survole un talent pour le lire, clique pour l’apprendre. Chaque palier s’ouvre avec assez de points dans sa branche.';
+  renderTree(); $('#scr-tree').hidden = false; SFX.play(auto ? 'level' : 'click');
+}
+function closeTree() { if (G.modal !== 'tree') return; G.modal = null; $('#scr-tree').hidden = true; }
+function learn(b, k) {
+  if (G.talentPts <= 0 || nodeState(b, k) !== 'avail') { SFX.play('deny'); return false; }
+  G.talentPts--; applyKit({ b, id: k }); SFX.play('card'); renderTree();
+  if (G.talentPts <= 0) setTimeout(() => { if (G && G.modal === 'tree' && G.talentPts <= 0) closeTree(); }, 500);
+  return true;
+}
+function renderTree() {
+  const P = G.talentPts;
+  $('#tree-eyebrow').textContent = `Niveau ${G.level} · ${G.H.name}, ${G.H.title}`;
+  $('#tree-pts').innerHTML = P ? `<b>${P}</b> point${P > 1 ? 's' : ''} à dépenser` : 'Aucun point à dépenser';
+  const box = $('#tree-branches'); box.innerHTML = '';
+  for (const b in TREE) {
+    const B = TREE[b], pts = G.kit.branch[b], col = document.createElement('div');
+    col.className = 'branch'; col.style.setProperty('--bc', B.color);
+    let html = `<h3>${B.name}<small>${pts} pt${pts > 1 ? 's' : ''}</small></h3>`;
+    for (let tier = 1; tier <= 4; tier++) {
+      const ks = Object.keys(B.cards).filter(k => TIERS[k] === tier), open = pts >= TIER_NEED[tier];
+      html += `<div class="tier${open ? '' : ' shut'}${tier === 4 ? ' legend' : ''}"><span class="req">${tier === 4 ? 'Légendaire' : `Palier ${tier}`}${TIER_NEED[tier] ? ` · ${TIER_NEED[tier]}${NB}pts` : ''}</span><div class="nodes">`;
+      for (const k of ks) {
+        const C = B.cards[k], st = nodeState(b, k), l = tl(k), max = C.legend ? 1 : C.max;
+        html += `<button type="button" class="node ${st}${l ? ' own' : ''}${st === 'avail' && P ? ' can' : ''}" data-b="${b}" data-k="${k}"><span class="ic" aria-hidden="true">${C.icon}</span><b>${fr(C.name)}</b><span class="rank">${Array.from({ length: max }, (_, i) => `<i class="${i < l ? 'on' : ''}"></i>`).join('')}</span></button>`;
+      }
+      html += '</div></div>';
+    }
+    col.innerHTML = html; box.appendChild(col);
+  }
+  for (const el of box.querySelectorAll('.node')) {
+    const b = el.dataset.b, k = el.dataset.k;
+    const show = () => { const C = TREE[b].cards[k], st = nodeState(b, k); $('#tree-detail').innerHTML = `<b>${C.icon} ${fr(C.name)}</b> · ${fr(C.desc)}${st === 'locked' ? ` <em>Il faut ${TIER_NEED[TIERS[k]]}${NB}points dans la branche ${TREE[b].name}.</em>` : st === 'max' ? ' <em>Maîtrisé.</em>' : ''}`; };
+    el.addEventListener('mouseenter', show); el.addEventListener('focus', show);
+    el.addEventListener('click', () => learn(b, k));
+  }
+}
+// ── Minicarte (et grande carte avec Tab) ──
+const MM = { base: null, big: false };
+function buildMiniBase(W, H) {
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d'), img = g.createImageData(W, H), sx = BAL.world.w / W, sy = BAL.world.h / H;
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+    const x = (i + .5) * sx, y = (j + .5) * sy, t = TER[cellOf(x, y)], r = regionAt(x, y);
+    let col = t === 1 ? [34, 66, 88] : t === 2 ? (edgeDist(x, y) < 0 ? [20, 28, 18] : [92, 82, 68]) : r && r.id === 'marais' ? [64, 52, 78] : r && (r.id === 'obs' || r.id === 'ruines') ? [86, 84, 72] : r && (r.id === 'bois' || r.id === 'hauts') ? [44, 62, 36] : [62, 80, 46];
+    const n = (j * W + i) * 4; img.data[n] = col[0]; img.data[n + 1] = col[1]; img.data[n + 2] = col[2]; img.data[n + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  g.scale(1 / sx, 1 / sy); g.lineCap = 'round'; g.lineJoin = 'round';
+  g.strokeStyle = '#a08a5a'; g.lineWidth = 40; for (const r of VAL.roads) { g.beginPath(); r.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke(); }
+  g.fillStyle = '#7a6a4a'; for (const b of VAL.bridges) { g.beginPath(); g.ellipse(b.x, b.y, b.rx * .7, b.ry, 0, 0, TAU); g.fill(); }
+  g.strokeStyle = '#b8b09a'; g.lineWidth = 30; g.beginPath(); g.ellipse(VAL.obs.x, VAL.obs.y, VAL.obs.r, VAL.obs.r * .8, 0, 0, TAU); g.stroke();
+  return c;
+}
+function drawMinimap(t) {
+  const c = $('#minimap'); if (!c || !G || !G.V) return;
+  const g = c.getContext('2d'), W = c.width, H = c.height, sx = W / BAL.world.w, sy = H / BAL.world.h, V = G.V, h = G.hero;
+  if (!MM.base) MM.base = buildMiniBase(W, H);
+  g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.drawImage(MM.base, 0, 0);
+  g.imageSmoothingEnabled = true; g.globalAlpha = .86; g.drawImage(fogCanvas(), 0, 0, W, H); g.globalAlpha = 1;
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  const icon = (x, y, txt, col, size = 22) => { const px = x * sx, py = y * sy; g.fillStyle = 'rgba(10,8,6,.75)'; g.beginPath(); g.arc(px, py, size * .62, 0, TAU); g.fill(); if (col) { g.strokeStyle = col; g.lineWidth = 3; g.stroke(); } g.font = `${size}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`; g.fillStyle = '#fff'; g.fillText(txt, px, py + 1); };
+  for (const p of V.phares) icon(p.x, p.y, '🗼', p.st === 'lit' ? '#cfe6ff' : p.st === 'idle' ? '#8a8270' : '#ffd76a', 24);
+  const side = (q, x, y, ic) => { if (seen(x, y) || q.st !== 'idle') icon(x, y, ic, q.st === 'done' ? '#9be38a' : q.st === 'fail' ? '#e65a4f' : q.st === 'idle' ? '#8a8270' : '#ffd76a'); };
+  side(V.hameau, VAL.hameau.x, VAL.hameau.y, '🏡'); side(V.camp, VAL.camp.x, VAL.camp.y, '⛺'); side(V.chef, VAL.lair.x, VAL.lair.y, '💀');
+  for (const m of V.menhirs) if (seen(m.x, m.y) && !m.got) icon(m.x, m.y, '🗿', '#9fc8ff', 18);
+  for (const e of V.nests) if (!e.dead) icon(e.x, e.y, '🕳️', '#c58cff', 18);
+  if (seen(VAL.merchant.x, VAL.merchant.y)) icon(VAL.merchant.x, VAL.merchant.y, '💰', '#f5c84c', 18);
+  if (V.eclipse || G.arena) { const k = .5 + .5 * Math.sin(t * 5); g.strokeStyle = `rgba(180,110,255,${.5 + .5 * k})`; g.lineWidth = 4; g.beginPath(); g.arc(VAL.obs.x * sx, VAL.obs.y * sy, 22 + 8 * k, 0, TAU); g.stroke(); icon(VAL.obs.x, VAL.obs.y, '🌑', '#c58cff', 24); }
+  // Champ de vision et héros
+  g.strokeStyle = 'rgba(255,255,255,.5)'; g.lineWidth = 2; g.strokeRect((cam.x - L.vw / 2) * sx, (cam.y - L.vh / 2) * sy, L.vw * sx, L.vh * sy);
+  g.fillStyle = '#ffffff'; g.strokeStyle = '#140d08'; g.lineWidth = 3; g.beginPath(); g.arc(h.x * sx, h.y * sy, 7, 0, TAU); g.fill(); g.stroke();
+  for (const e of G.enemies) if (!e.dead && (e.boss || e.elite) && seen(e.x, e.y)) { g.fillStyle = e.boss ? '#ff5a3c' : '#ffd76a'; g.beginPath(); g.arc(e.x * sx, e.y * sy, e.boss ? 6 : 4, 0, TAU); g.fill(); }
+}
+function toggleBigMap() { MM.big = !MM.big; $('#mm').classList.toggle('big', MM.big); }
+// ── Journal de quêtes (panneau de gauche) ──
+function valHUD() {
+  const V = G.V, h = G.hero, P = CYCLE[V.ci];
+  // Horloge : temps restant avant la prochaine phase du cycle.
+  if (P.k === 'eclipse') { setText('#h-time', clock(G.t)); setText('#h-sub', G.arena ? 'L’Éclipse · l’arène' : 'L’Éclipse · rejoins l’Observatoire'); }
+  else { setText('#h-time', clock(P.T - V.ct)); setText('#h-sub', !G.started ? 'Bouge pour commencer' : P.k === 'jour' ? `☀️ Jour ${P.n} · avant la nuit` : `🌙 Nuit ${P.n} · ${P.n === 2 ? 'avant l’Éclipse' : 'avant l’aube'}`); }
+  let title = 'Explore le val', text = 'Rallume les Phares avant l’Éclipse : chacun affaiblit le Dévoreur.', p = V.lit / 3;
+  const near = V.phares.find(q => (q.st === 'awake' || q.st === 'ritual') && d2(h.x, h.y, q.x, q.y) < 760 * 760);
+  const ev = G.event;
+  if (ev && ev.k === 'boss') { const b = ev.boss; title = b.dead ? 'Victoire !' : 'Abats le Dévoreur d’étoiles'; text = b.dead ? '' : `Phase ${b.phase || 1} sur 3 · traverse ta constellation sur lui : ×2,5`; p = 1 - b.hp / b.maxHp; }
+  else if (V.eclipse) { title = 'Rejoins l’Observatoire'; text = 'Au nord du lac, par le Grand Escalier.'; p = 0; }
+  else if (G.ward) { title = 'Défends le hameau'; text = `Tiens encore ${Math.ceil(V.hameau.t)}${NB}s · feu : ${Math.round(100 * G.ward.hp / G.ward.maxHp)}${NB}%`; p = 1 - V.hameau.t / 40; }
+  else if (near) { title = near.name; text = near.st === 'ritual' && near.held === 3 ? `Rituel : ${Math.floor(near.charge * 100)}${NB}% · protège tes étoiles` : `Étoiles sur les socles : ${near.held} sur 3 (clic droit dessus)`; p = near.st === 'ritual' ? near.charge : near.held / 3; }
+  else if (ev && ev.k === 'herauts') { title = EVENTS.herauts.name; text = `${ev.list.filter(e => e.dead).length} / 3 hérauts abattus`; p = ev.list.filter(e => e.dead).length / 3; }
+  else if (V.camp.st === 'fight' && d2(h.x, h.y, VAL.camp.x, VAL.camp.y) < 900 * 900) { const n = V.camp.list.filter(e => e.dead).length; title = QUESTS.camp.name; text = `${n} / 4 abattus (3 tentes et le chef)`; p = n / 4; }
+  else if (ev && ev.k === 'lune') { title = EVENTS.lune.name; text = EVENTS.lune.desc; p = 0; }
+  setText('#m-eyebrow', `${QUESTS.phares.icon} Quêtes · ${G.D.name}`); setText('#m-title', title); setText('#m-text', text);
+  $('#m-bar').style.setProperty('--p', clamp(p, 0, 1).toFixed(3));
+  const st = q => q.st === 'done' ? ['ok', '✓'] : q.st === 'fail' ? ['ko', '✗'] : q.st === 'idle' ? ['', '·'] : ['on', '!'];
+  const lines = [
+    ['main' + (V.lit === 3 ? ' ok' : ''), QUESTS.phares.icon, QUESTS.phares.name, `${V.lit}/3`],
+    [st(V.hameau)[0], QUESTS.hameau.icon, QUESTS.hameau.name, st(V.hameau)[1]],
+    [st(V.camp)[0], QUESTS.camp.icon, QUESTS.camp.name, st(V.camp)[1]],
+    [st(V.chef)[0], QUESTS.chef.icon, QUESTS.chef.name, st(V.chef)[1]],
+    [V.menhirs.every(m => m.got) ? 'ok' : '', QUESTS.menhirs.icon, QUESTS.menhirs.name, `${V.menhirs.filter(m => m.got).length}/6`],
+  ];
+  const nests = V.nests.filter(e => !e.dead).length;
+  if (nests) lines.push(['on', '🕳️', 'Nids de cendres', String(nests)]);
+  const html = lines.map(([c, ic, n, s]) => `<li class="${c}"><span>${ic}</span><span>${fr(n)}</span><b>${s}</b></li>`).join('');
+  if (hudCache.mlist !== html) { hudCache.mlist = html; $('#m-list').innerHTML = html; }
+  setText('#mm-reg', V.region ? V.region.name : 'Les landes du val');
+  const pr = $('#prompt'); pr.hidden = V.near !== 'shop' || !!G.modal; if (!pr.hidden) setText('#prompt', 'F · Commercer avec le colporteur');
+  setText('#h-pts', G.talentPts); $('#h-tree').classList.toggle('glow', G.talentPts > 0);
+}
+// Cibles à signaler au bord de l’écran.
+function valTargets() {
+  const V = G.V, out = [];
+  if (V.eclipse && !G.arena) { out.push(VAL.obs); return out; }
+  for (const p of V.phares) if ((p.st === 'awake' || p.st === 'ritual') && d2(G.hero.x, G.hero.y, p.x, p.y) < 900 * 900) for (const q of p.peds) if (!q.star) out.push(q);
+  if (G.ward) out.push(G.ward);
+  if (V.camp.st === 'fight') for (const e of V.camp.list) if (!e.dead) out.push(e);
+  if (G.event && G.event.k === 'herauts') for (const e of G.event.list) if (!e.dead) out.push(e);
+  return out;
+}
+// ── Dessin des lieux du Val ──
+function drawValGround(t) {
+  const V = G.V; if (!V) return;
+  for (const p of V.phares) {
+    // Plateforme octogonale et cercle de glyphes
+    ctx.fillStyle = 'rgba(20,16,12,.35)'; ellipse(p.x, p.y + 6, 205, 170); ctx.fill();
+    ctx.strokeStyle = hexA(p.st === 'lit' ? '#cfe6ff' : '#b8b09a', p.st === 'idle' ? .25 : .45); ctx.lineWidth = 3; ellipse(p.x, p.y, PHARE.pedR + 40, (PHARE.pedR + 40) * .8); ctx.stroke();
+    ctx.setLineDash([6, 10]); ctx.lineDashOffset = -t * 12; ellipse(p.x, p.y, PHARE.pedR - 30, (PHARE.pedR - 30) * .8); ctx.stroke(); ctx.setLineDash([]); ctx.lineDashOffset = 0;
+    if (p.st === 'ritual') { ctx.strokeStyle = '#e8f2ff'; ctx.lineWidth = 7; ctx.beginPath(); ctx.ellipse(p.x, p.y, PHARE.pedR + 52, (PHARE.pedR + 52) * .8, 0, -Math.PI / 2, -Math.PI / 2 + TAU * p.charge); ctx.stroke(); }
+    for (const q of p.peds) {
+      shadowAt(q.x, q.y + 3, 26, 9, .6);
+      ctx.fillStyle = '#4e4a42'; ellipse(q.x, q.y, 24, 11); ctx.fill(); ctx.fillStyle = '#8a8476'; ellipse(q.x, q.y - 4, 22, 9); ctx.fill();
+      const on = !!q.star, k = on ? 1 : p.st === 'idle' || p.st === 'lit' ? .2 : .45 + .3 * Math.sin(t * 4);
+      ctx.fillStyle = hexA('#cfe6ff', k); starPath(q.x, q.y - 4, 10, 0); ctx.fill();
+      if (on && p.st !== 'lit') { ctx.strokeStyle = hexA('#cfe6ff', .5 + .3 * Math.sin(t * 6)); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(q.x, q.y - 10); ctx.lineTo(p.x, p.y - 120); ctx.stroke(); }
+      else if (!on && (p.st === 'awake' || p.st === 'ritual')) { ctx.strokeStyle = hexA('#ffd76a', .5 + .3 * Math.sin(t * 5)); ctx.lineWidth = 2; ellipse(q.x, q.y, 34 + 4 * Math.sin(t * 5), 15); ctx.stroke(); }
+    }
+  }
+  // Hameau : place de terre battue ; colporteur : tapis
+  const M = VAL.merchant; ctx.fillStyle = '#6a2a2a'; ctx.fillRect(M.x - 30, M.y - 6, 60, 26); ctx.fillStyle = '#c8a050'; ctx.fillRect(M.x - 30, M.y - 6, 60, 3); ctx.fillRect(M.x - 30, M.y + 17, 60, 3);
+  for (const m of V.menhirs) if (!m.got) { ctx.strokeStyle = hexA('#9fc8ff', .35 + .25 * Math.sin(t * 3 + m.x)); ctx.lineWidth = 2.5; ellipse(m.x, m.y + 4, 44, 18); ctx.stroke(); }
+  if (V.eclipse && !G.arena) { const O = VAL.obs; for (let i = 0; i < 4; i++) { const r = 60 + ((t * 50 + i * 40) % 160); ctx.strokeStyle = `rgba(160,90,255,${.6 * (1 - r / 220)})`; ctx.lineWidth = 3; ellipse(O.x, O.y, r, r * .8); ctx.stroke(); } }
+}
+function drawPoi(o, t) {
+  const V = G.V;
+  if (o.k === 'phare') {
+    const p = o.p, x = p.x, y = p.y;
+    shadowAt(x + 6, y + 4, 46, 14);
+    const g = ctx.createLinearGradient(x - 22, 0, x + 22, 0); g.addColorStop(0, '#4a4740'); g.addColorStop(1, '#a29c8e');
+    ctx.fillStyle = '#3a3730'; ctx.fillRect(x - 34, y - 14, 68, 16);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x - 22, y - 12); ctx.lineTo(x - 13, y - 118); ctx.lineTo(x + 13, y - 118); ctx.lineTo(x + 22, y - 12); ctx.closePath(); ctx.fill();
+    const k = p.st === 'lit' ? 1 : p.st === 'ritual' ? .35 + .65 * p.charge : p.st === 'awake' ? .3 + .1 * Math.sin(t * 3) : .12;
+    ctx.fillStyle = hexA('#cfe6ff', .25 + .75 * k); for (let i = 0; i < 5; i++) ctx.fillRect(x - 2, y - 104 + i * 18, 4, 9);
+    // Cristal
+    const cy = y - 138 + Math.sin(t * 2) * 3;
+    ctx.fillStyle = p.st === 'lit' ? '#ffffff' : shade('#6a7a90', k * .8); ctx.beginPath(); ctx.moveTo(x, cy - 26); ctx.lineTo(x + 13, cy); ctx.lineTo(x, cy + 18); ctx.lineTo(x - 13, cy); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = hexA('#cfe6ff', .4 + .5 * k); ctx.beginPath(); ctx.moveTo(x, cy - 26); ctx.lineTo(x + 13, cy); ctx.lineTo(x, cy); ctx.closePath(); ctx.fill();
+  } else if (o.k === 'menhir') {
+    const m = o.m, s = dspr('menhir', 1), k = .62;
+    shadowAt(m.x + 3, m.y + 2, 26, 9, .7);
+    ctx.drawImage(s.c, m.x - s.ax * k, m.y - s.ay * k, s.w * k, s.h * k);
+    if (!m.got) { ctx.fillStyle = hexA('#bfe0ff', .6 + .4 * Math.sin(t * 3 + m.x)); ctx.fillRect(m.x - 3, m.y - 70, 5, 30); ctx.fillRect(m.x - 10, m.y - 58, 19, 4); }
+  } else if (o.k === 'shop') {
+    const x = o.x, y = o.y;
+    shadowAt(x + 50, y + 2, 48, 12);
+    ctx.fillStyle = '#4a2c15'; ctx.fillRect(x + 14, y - 28, 74, 20);
+    const g = ctx.createLinearGradient(0, y - 66, 0, y - 28); g.addColorStop(0, '#a83a2a'); g.addColorStop(1, '#6a2018'); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x + 18, y - 28); ctx.quadraticCurveTo(x + 51, y - 70, x + 84, y - 28); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#e8c04a'; ctx.fillRect(x + 18, y - 31, 66, 3);
+    for (const wx of [30, 72]) { ctx.fillStyle = '#2a1c12'; circle(x + wx, y - 6, 9); ctx.fill(); ctx.strokeStyle = '#8a5a2e'; ctx.lineWidth = 2; ctx.stroke(); }
+    drawUnit('colporteur', 'idle', x - 18, y + 4, 1, false);
+    ctx.fillStyle = '#3a2a1a'; ctx.fillRect(x - 40, y - 54, 3, 56); ctx.fillStyle = '#ffcf6a'; ctx.fillRect(x - 43, y - 62, 9, 9);
+    if (V.near === 'shop' && !G.modal) { ctx.font = '800 14px "Alegreya Sans", sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3.5; ctx.strokeStyle = '#140d08'; ctx.strokeText('F · Colporteur', x + 20, y - 92); ctx.fillStyle = '#ffd76a'; ctx.fillText('F · Colporteur', x + 20, y - 92); }
+  } else if (o.k === 'hearth') {
+    const x = o.x, y = o.y, Q = V.hameau, out = Q.st === 'fail';
+    shadowAt(x, y + 4, 40, 12);
+    for (let i = 0; i < 10; i++) { const a = i / 10 * TAU; ctx.fillStyle = i % 2 ? '#6a665c' : '#8a8578'; ellipse(x + Math.cos(a) * 30, y + Math.sin(a) * 12, 9, 6); ctx.fill(); }
+    if (!out) flame(x, y - 2, 1.5 * (G.ward ? .6 + .4 * G.ward.hp / G.ward.maxHp : 1), t, 3);
+    else smoke(x, y - 10, Math.random() < .1 ? 1 : 0);
+    if (G.ward) hpBar(x, y - 70, 70, G.ward.hp / G.ward.maxHp, G.ward.hp / G.ward.maxHp < .35 ? '#e65a4f' : '#ffb347');
+  } else if (o.k === 'npc') {
+    if (V.hameau.st === 'fail') return;
+    const scared = V.hameau.st === 'defend', bob = scared ? Math.abs(Math.sin(t * 12 + o.x)) * 2 : 0;
+    shadowAt(o.x, o.y + 2, 12, 5); drawUnit(o.look, 'idle', o.x, o.y + 2 - bob, o.f, false, .9);
+  } else if (o.k === 'astro') {
+    // Sphère armillaire brisée au cœur de l’Observatoire
+    const x = o.x, y = o.y;
+    shadowAt(x, y + 6, 70, 20);
+    ctx.fillStyle = '#5a554a'; ctx.fillRect(x - 40, y - 20, 80, 22); ctx.fillStyle = '#7a7466'; ctx.fillRect(x - 46, y - 24, 92, 8);
+    ctx.strokeStyle = '#b8924a'; ctx.lineWidth = 5;
+    const cy = y - 110, s = t * .4;
+    ctx.beginPath(); ctx.ellipse(x, cy, 70, 70, 0, .3, TAU - .5); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(x, cy, 70, 22, .3 + Math.sin(s) * .1, 0, TAU); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(x, cy, 26, 70, s, 0, TAU); ctx.stroke();
+    ctx.fillStyle = '#6a5a3a'; ctx.fillRect(x - 4, y - 44, 8, 26);
+    ctx.fillStyle = V.eclipse ? '#1a0e2a' : '#cfe6ff'; circle(x, cy, 12); ctx.fill();
+  }
+}
+// Tente de pillards (objectif du camp) : toile rayée, piquets, fumée.
+function drawTent(e, t) {
+  const x = e.x, y = e.y, f = e.flash > 0;
+  shadowAt(x, y + 6, 48, 14);
+  ctx.fillStyle = f ? '#ffffff' : '#6a4a2a'; ctx.beginPath(); ctx.moveTo(x - 46, y + 4); ctx.lineTo(x, y - 62); ctx.lineTo(x + 46, y + 4); ctx.closePath(); ctx.fill();
+  if (!f) { ctx.fillStyle = '#8a2a2a'; for (const k of [-.5, .1]) { ctx.beginPath(); ctx.moveTo(x + k * 46, y + 4); ctx.lineTo(x + k * 10, y - 52); ctx.lineTo(x + k * 10 + 9, y - 46); ctx.lineTo(x + k * 46 + 14, y + 4); ctx.closePath(); ctx.fill(); } }
+  ctx.fillStyle = '#1a120a'; ctx.beginPath(); ctx.moveTo(x - 10, y + 4); ctx.lineTo(x, y - 26); ctx.lineTo(x + 10, y + 4); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#3a2a1a'; ctx.fillRect(x - 1.5, y - 74, 3, 14); ctx.fillStyle = '#b8322a'; ctx.beginPath(); ctx.moveTo(x + 1.5, y - 74); ctx.lineTo(x + 18 + Math.sin(t * 5 + e.ph) * 3, y - 69); ctx.lineTo(x + 1.5, y - 64); ctx.closePath(); ctx.fill();
+  hpBar(x, y - 86, 52, e.hp / e.maxHp, '#ffb347');
+}
+// Faisceaux des phares (passe additive) : visibles de loin, ce sont des repères dans la nuit.
+function glowVal(t) {
+  const V = G.V; if (!V) return;
+  for (const p of V.phares) {
+    const k = p.st === 'lit' ? 1 : p.st === 'ritual' ? p.charge * .7 : 0; if (!k) continue;
+    const w = 26 * k + 6, top = p.y - 140 - 900 * k, g = ctx.createLinearGradient(0, top, 0, p.y - 140);
+    g.addColorStop(0, 'rgba(207,230,255,0)'); g.addColorStop(1, `rgba(207,230,255,${.35 * k})`);
+    ctx.globalAlpha = 1; ctx.fillStyle = g; ctx.fillRect(p.x - w / 2, top, w, p.y - 140 - top);
+    bloom(p.x, p.y - 138, 70 * k + 20, '#e8f2ff', .7 * k);
+  }
+}
+function valLights(L1, t, inV) {
+  const V = G.V; if (!V) return;
+  for (const p of V.phares) { if (!inV(p.x, p.y, 700)) continue; if (p.st === 'lit') L1(p.x, p.y - 60, 520, '#cfe6ff', .95); else if (p.st === 'ritual') L1(p.x, p.y - 60, 200 + 300 * p.charge, '#cfe6ff', .8); else L1(p.x, p.y - 138, 110, '#9fc8ff', p.st === 'awake' ? .6 : .3); }
+  for (const m of V.menhirs) if (!m.got && inV(m.x, m.y, 200)) L1(m.x, m.y - 50, 130, '#9fc8ff', .6 + .2 * Math.sin(t * 3 + m.x), 30, .3);
+  const M = VAL.merchant; if (inV(M.x, M.y, 300)) L1(M.x - 38, M.y - 58, 190, '#ffcf6a', .8, 24, .4);
+  const H = VAL.hameau; if (inV(H.x, H.y, 400) && V.hameau.st !== 'fail') L1(H.x, H.y - 20, 300, '#ff9a4a', .95, 60, .4);
+  if (V.eclipse && !G.arena && inV(VAL.obs.x, VAL.obs.y, 500)) L1(VAL.obs.x, VAL.obs.y - 60, 420, '#9a5aff', .8, 80, .3);
+  else if (inV(VAL.obs.x, VAL.obs.y, 400)) L1(VAL.obs.x, VAL.obs.y - 110, 160, '#cfe6ff', .5);
+}
+// Lumière ambiante : du jour doré à la nuit bleue, puis l’Éclipse.
+function lerpHex(a, b, k) { const A = rgb(a), B = rgb(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * k).toString(16).padStart(2, '0')).join(''); }
+function valAmbient() {
+  const V = G.V;
+  if (G.eclipse) return '#1e1a2c';
+  if (G.arena) return '#6a6688';
+  if (V.eclipse) return '#4a4468';
+  let c = lerpHex('#ddd5c2', '#5a6192', V.night);
+  if (G.bloodMoon) c = lerpHex(c, '#9a5a66', .55 * V.night);
+  return c;
 }
 // ═════════════════════════ Cartes de niveau ═════════════════════════
 // Armes communes à débloquer au camp (défis).
@@ -2204,6 +2934,7 @@ function applyOffer(o) {
   else if (o.kind === 'tal') { o.sp.tal[o.id] = true; renderSpells(); banner(o.title, SPELLS[o.sp.id].name, 'ult'); }
   else if (o.kind === 'army') G.army.ups[o.id] = (G.army.ups[o.id] || 0) + 1;
   else if (o.kind === 'kit') applyKit(o);
+  else if (o.kind === 'relic') giveRelic(o.id);
   else if (o.kind === 'pass') { G.passives[o.id] = plv(o.id) + 1; recomputeMods(); }
   else if (o.kind === 'evo') { G.cr -= 1; o.w.evo = true; G.stats.evos++; banner(WEAPONS[o.id].evo.name, 'Évolution', 'ult'); SFX.play('evolve'); shake(6); ring(G.hero.x, G.hero.y, 120, '#ffd76a', .8); sparkle(G.hero.x, G.hero.y - 30, '#ffd76a', 40); }
   else if (o.kind === 'gold') G.gold += o.v;
@@ -2214,6 +2945,7 @@ function openCards() {
   renderCards(); $('#scr-cards').hidden = false; SFX.play('level');
 }
 function cardInfo(o) {
+  if (o.kind === 'relic') { const R = RELICS[o.id], Q = RARITY[R.r]; return { rc: Q.c, top: Q.name, ic: R.icon, name: R.name, desc: R.desc, evo: '', foot: 'Effet permanent pour cette partie' }; }
   if (o.kind === 'kit') { const B = TREE[o.b], C = B.cards[o.id], l = tl(o.id), pts = G.kit.branch[o.b], leg = Object.values(B.cards).find(c => c.legend); return { rc: C.legend ? 'var(--evo)' : B.color, top: `${B.name}${C.legend ? ' · Légendaire' : ''}`, ic: C.icon, name: C.name, desc: C.desc, evo: C.legend ? '' : (pts + 1 >= LEGEND_NEED && !tl(Object.keys(B.cards).find(k => B.cards[k].legend)) ? `Débloque la légendaire : ${leg.name}` : `Branche ${B.name} : ${pts + 1} sur ${LEGEND_NEED} vers ${leg.name}`), foot: C.max > 1 ? `Niv. ${l} → ${l + 1} sur ${C.max}` : '' }; }
   if (o.kind === 'army') { const A = ARMY_UP[o.id], l = G.army.ups[o.id] || 0; return { rc: ARMY.color, top: 'Armée', ic: A.icon, name: A.name, desc: A.desc, evo: '', foot: `Niv. ${l} → ${l + 1} sur ${A.max}` }; }
   if (o.kind === 'tal') { const S = SPELLS[o.sp.id], T = S.talents[o.id]; return { rc: 'var(--epic)', top: `Talent · ${S.name}`, ic: S.icon, name: T.name, desc: T.desc, evo: '', foot: `Transforme ton sort (${o.i ? 'Espace' : 'clic droit'})` }; }
@@ -2230,8 +2962,10 @@ function upDesc(W, lvl) {
   return Object.entries(u).map(([k, v]) => k === 'cd' ? `Recharge −${Math.abs(v).toString().replace('.', ',')}${NB}s` : `${UPNAMES[k][0].toUpperCase() + UPNAMES[k].slice(1)} +${String(v).replace('.', ',')}`).join(' · ') + '.';
 }
 function renderCards() {
-  $('#pick-eyebrow').textContent = `Niveau ${G.level - G.pendingLv}`;
-  $('#pick-title').textContent = G.offer.some(o => o.kind === 'evo') ? 'Une évolution est prête !' : 'Choisis une amélioration';
+  const relic = G.offer.every(o => o.kind === 'relic');
+  $('#pick-eyebrow').textContent = relic ? 'Récompense de quête' : `Niveau ${G.level - G.pendingLv}`;
+  $('#pick-title').textContent = relic ? 'Choisis une relique' : G.offer.some(o => o.kind === 'evo') ? 'Une évolution est prête !' : 'Choisis une amélioration';
+  $('#pick-reroll').hidden = relic;
   const box = $('#pick-cards'); box.innerHTML = '';
   G.offer.forEach((o, i) => {
     const c = cardInfo(o), el = document.createElement('button');
@@ -2287,6 +3021,7 @@ function update(dt) {
   updateCam();
   updateSpawns(dt);
   updateMission(dt);
+  if (G.V) updateFlow(dt);
   updateEnemies(dt);
   updateAllies(dt);
   updateEProjs(dt);
@@ -2300,7 +3035,12 @@ function update(dt) {
   updateFx(dt);
   if (G.enemies.some(e => e.dead)) G.enemies = G.enemies.filter(e => !e.dead);
   if (G.finalDown) { G.winT -= dt; if (G.winT <= 0) { endRun(true); return; } }
-  if (!G.modal && G.pendingLv > 0 && !G.finalDown) { G.pendingLv--; openCards(); }
+  // Récompenses en attente : reliques d’abord, puis l’arbre (Lyriel) ou les cartes.
+  if (!G.modal && !G.finalDown && !G.deadT) {
+    if (G.relicQ.length) openRelics(G.relicQ.shift());
+    else if (G.H.kit && (G.pendingLv > 0 || G.wantTree)) { G.talentPts += G.pendingLv; G.pendingLv = 0; G.wantTree = false; if (G.talentPts > 0) openTree(true); }
+    else if (G.pendingLv > 0) { G.pendingLv--; openCards(); }
+  }
 }
 
 // ═════════════════════════ Rendu ═════════════════════════
@@ -2366,6 +3106,154 @@ const CH = 512, CHUNKS = new Map();
 let chunkBudget = 0;
 // Bruit fin (grain) partagé
 const GRAIN = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), d = x.createImageData(128, 128), R = mulberry32(5); for (let i = 0; i < d.data.length; i += 4) { const v = R() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; } x.putImageData(d, 0, 0); return c; })();
+// ── Peinture du Val dans les morceaux de sol : marais, routes, dallages, eau, ponts, falaises, lisières ──
+const LAKE_PATH = (() => { const p = new Path2D(), L = VAL.lake; for (let i = 0; i <= 120; i++) { const a = i / 120 * TAU, r = lakeR(a), x = L.x + Math.cos(a) * L.rx * r, y = L.y + Math.sin(a) * L.ry * r; i ? p.lineTo(x, y) : p.moveTo(x, y); } p.closePath(); return p; })();
+const RIVER_PATH = (() => { const p = new Path2D(); VAL.river.pts.forEach(([x, y], i) => i ? p.lineTo(x, y) : p.moveTo(x, y)); return p; })();
+const bboxOf = pts => { const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]); return { x0: Math.min(...xs), y0: Math.min(...ys), x1: Math.max(...xs), y1: Math.max(...ys) }; };
+const MARSH = VAL.regions.find(r => r.id === 'marais');
+const marshAt = (x, y) => clamp((1 - dist(x, y, MARSH.x, MARSH.y) / MARSH.r) * 1.7, 0, 1);
+const PAINT = (() => {
+  const R = mulberry32(99), L = VAL.lake, pools = [], slabs = [], ripples = [], wear = [];
+  for (let i = 0; i < 40 && pools.length < 16; i++) { const a = R() * TAU, d = Math.sqrt(R()) * MARSH.r * .75, x = MARSH.x + Math.cos(a) * d, y = MARSH.y + Math.sin(a) * d * .8; if (walkable(x, y) && VAL.phares.every(p => dist(x, y, p.x, p.y) > 260)) pools.push({ x, y, r: 30 + R() * 70, a: R() * 3 }); }
+  for (let i = 0; i < 22; i++) { const a = R() * TAU, d = Math.sqrt(R()) * 540; slabs.push({ x: 3850 + Math.cos(a) * d, y: 700 + Math.sin(a) * d * .8, w: 50 + R() * 90, h: 30 + R() * 50, a: (R() - .5) * .5 }); }
+  for (let i = 0; i < 400 && ripples.length < 90; i++) { const x = L.x + (R() - .5) * L.rx * 2.2, y = L.y + (R() - .5) * L.ry * 2.2; if (lakeK(x, y) < .9) ripples.push({ x, y, r: 8 + R() * 22 }); }
+  for (let i = 0; i < 70; i++) { const a = R() * TAU, d = Math.sqrt(R()) * VAL.obs.r * .95; wear.push({ x: VAL.obs.x + Math.cos(a) * d, y: VAL.obs.y + Math.sin(a) * d * .8, r: 8 + R() * 26, moss: R() < .5 }); }
+  return { pools, slabs, ripples, wear, roads: VAL.roads.map(bboxOf), ridges: VAL.ridges.map(r => bboxOf(r.pts)), river: bboxOf(VAL.river.pts) };
+})();
+function smoothPath(g, pts) {
+  g.beginPath(); g.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length - 1; i++) g.quadraticCurveTo(pts[i][0], pts[i][1], (pts[i][0] + pts[i + 1][0]) / 2, (pts[i][1] + pts[i + 1][1]) / 2);
+  g.lineTo(pts[pts.length - 1][0], pts[pts.length - 1][1]);
+}
+// Sous les herbes : sol du marais, routes, places dallées.
+function paintUnder(g, X0, Y0, near) {
+  const box = (b, m) => b.x1 + m > X0 && b.x0 - m < X0 + CH && b.y1 + m > Y0 && b.y0 - m < Y0 + CH;
+  if (near(MARSH.x, MARSH.y, MARSH.r)) {
+    const gr = g.createRadialGradient(MARSH.x, MARSH.y, 0, MARSH.x, MARSH.y, MARSH.r); gr.addColorStop(0, 'rgba(42,37,52,.97)'); gr.addColorStop(.55, 'rgba(46,40,56,.85)'); gr.addColorStop(1, 'rgba(46,40,56,0)');
+    g.fillStyle = gr; g.fillRect(MARSH.x - MARSH.r, MARSH.y - MARSH.r, MARSH.r * 2, MARSH.r * 2);
+    for (const p of PAINT.pools) if (near(p.x, p.y, p.r)) { g.fillStyle = 'rgba(18,12,26,.6)'; g.beginPath(); g.ellipse(p.x, p.y, p.r, p.r * .6, p.a, 0, TAU); g.fill(); g.strokeStyle = 'rgba(180,122,255,.22)'; g.lineWidth = 2; g.stroke(); }
+  }
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  VAL.roads.forEach((pts, i) => {
+    if (!box(PAINT.roads[i], 60)) return;
+    for (const [lw, col] of [[66, 'rgba(58,44,28,.5)'], [50, 'rgba(110,88,56,.9)'], [14, 'rgba(150,126,88,.35)']]) { g.strokeStyle = col; g.lineWidth = lw; smoothPath(g, pts); g.stroke(); }
+  });
+}
+// Par-dessus les herbes : eau, ponts, falaises et lisière du monde.
+function paintOver(g, X0, Y0, near) {
+  const box = (b, m) => b.x1 + m > X0 && b.x0 - m < X0 + CH && b.y1 + m > Y0 && b.y0 - m < Y0 + CH, L = VAL.lake, rv = VAL.river;
+  const Hm = VAL.hameau;
+  if (near(Hm.x, Hm.y, 240)) { const gr = g.createRadialGradient(Hm.x, Hm.y, 0, Hm.x, Hm.y, 230); gr.addColorStop(0, 'rgba(112,90,58,.85)'); gr.addColorStop(1, 'rgba(112,90,58,0)'); g.fillStyle = gr; g.fillRect(Hm.x - 240, Hm.y - 240, 480, 480); }
+  for (const s of PAINT.slabs) if (near(s.x, s.y, 80)) {
+    g.save(); g.translate(s.x, s.y); g.rotate(s.a);
+    g.fillStyle = 'rgba(30,26,20,.35)'; g.fillRect(-s.w / 2 + 3, -s.h / 2 + 3, s.w, s.h);
+    g.fillStyle = '#6a665a'; g.fillRect(-s.w / 2, -s.h / 2, s.w, s.h);
+    g.strokeStyle = '#4a463c'; g.lineWidth = 2; for (let x = -s.w / 2 + 22; x < s.w / 2; x += 22) { g.beginPath(); g.moveTo(x, -s.h / 2); g.lineTo(x, s.h / 2); g.stroke(); }
+    g.fillStyle = 'rgba(80,110,50,.35)'; g.fillRect(-s.w / 2, s.h / 2 - 6, s.w * .6, 6);
+    g.restore();
+  }
+  const O = VAL.obs;
+  if (near(O.x, O.y, O.r + 20)) {
+    g.fillStyle = '#58544a'; g.beginPath(); g.ellipse(O.x, O.y, O.r, O.r * .8, 0, 0, TAU); g.fill();
+    g.strokeStyle = '#3a362e'; g.lineWidth = 3;
+    for (let k = 1; k <= 5; k++) { const r = O.r * k / 5.2; g.beginPath(); g.ellipse(O.x, O.y, r, r * .8, 0, 0, TAU); g.stroke(); }
+    for (let i = 0; i < 24; i++) { const a = i / 24 * TAU; g.beginPath(); g.moveTo(O.x + Math.cos(a) * O.r * .19, O.y + Math.sin(a) * O.r * .152); g.lineTo(O.x + Math.cos(a) * O.r, O.y + Math.sin(a) * O.r * .8); g.stroke(); }
+    g.fillStyle = 'rgba(178,170,150,.75)'; g.beginPath();
+    for (let i = 0; i < 16; i++) { const a = -Math.PI / 2 + i * Math.PI / 8, rr = i % 2 ? O.r * .12 : i % 4 ? O.r * .36 : O.r * .62; g.lineTo(O.x + Math.cos(a) * rr, O.y + Math.sin(a) * rr * .8); }
+    g.closePath(); g.fill(); g.strokeStyle = 'rgba(159,200,255,.4)'; g.lineWidth = 2; g.stroke();
+    for (const w of PAINT.wear) { g.fillStyle = w.moss ? 'rgba(74,96,52,.45)' : 'rgba(34,30,24,.4)'; g.beginPath(); g.ellipse(w.x, w.y, w.r, w.r * .6, 0, 0, TAU); g.fill(); }
+    g.strokeStyle = '#2a261f'; g.lineWidth = 9; g.beginPath(); g.ellipse(O.x, O.y, O.r, O.r * .8, 0, 0, TAU); g.stroke();
+  }
+  const nl = near(L.x, L.y, L.rx * 1.25), nr = box(PAINT.river, 120);
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  if (nl || nr) {
+    g.strokeStyle = '#3c3324'; g.lineWidth = 52; if (nl) g.stroke(LAKE_PATH); g.lineWidth = rv.w + 46; if (nr) g.stroke(RIVER_PATH);
+    g.strokeStyle = '#62533a'; g.lineWidth = 28; if (nl) g.stroke(LAKE_PATH); g.lineWidth = rv.w + 20; if (nr) g.stroke(RIVER_PATH);
+    const gr = g.createRadialGradient(L.x, L.y, 30, L.x, L.y, L.rx * 1.1); gr.addColorStop(0, '#11283a'); gr.addColorStop(.65, '#1a3b50'); gr.addColorStop(1, '#295463');
+    g.fillStyle = gr; if (nl) g.fill(LAKE_PATH); g.strokeStyle = '#1f4558'; g.lineWidth = rv.w; if (nr) g.stroke(RIVER_PATH);
+    g.strokeStyle = 'rgba(190,225,240,.13)'; g.lineWidth = 2;
+    for (const w of PAINT.ripples) if (near(w.x, w.y, 30)) { g.beginPath(); g.ellipse(w.x, w.y, w.r, w.r * .3, 0, .2, Math.PI - .2); g.stroke(); }
+    if (nr) { g.setLineDash([16, 34]); g.strokeStyle = 'rgba(190,225,240,.14)'; g.save(); g.translate(0, -14); g.stroke(RIVER_PATH); g.translate(0, 26); g.stroke(RIVER_PATH); g.restore(); g.setLineDash([]); }
+    g.strokeStyle = 'rgba(170,210,220,.3)'; g.lineWidth = 3; if (nl) g.stroke(LAKE_PATH);
+  }
+  for (const b of VAL.bridges) if (near(b.x, b.y, 140)) {
+    const x0 = b.x - 40, y0 = b.y - b.ry + 6, hh = b.ry * 2 - 12;
+    g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(x0 + 8, y0 + 10, 80, hh);
+    g.fillStyle = '#3a2616'; g.fillRect(x0, y0, 80, hh);
+    for (let y = y0 + 3, i = 0; y < y0 + hh - 6; y += 11, i++) { g.fillStyle = i % 2 ? '#7a5a36' : '#8a6a42'; g.fillRect(x0 + 6, y, 68, 9); g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(x0 + 6, y + 8, 68, 1); }
+    g.fillStyle = '#2a1a0e'; g.fillRect(x0 - 3, y0, 8, hh); g.fillRect(x0 + 75, y0, 8, hh);
+    for (const k of [0, .5, 1]) { g.fillStyle = '#4a3220'; g.fillRect(x0 - 6, y0 + k * (hh - 10), 14, 12); g.fillRect(x0 + 72, y0 + k * (hh - 10), 14, 12); }
+  }
+  // Falaises : une crête de blocs rocheux irréguliers (face sombre, sommet éclairé, mousse), plus fine aux extrémités.
+  VAL.ridges.forEach((r, i) => {
+    if (!box(PAINT.ridges[i], r.w + 80)) return;
+    const R = mulberry32(31 * i + 5), rocks = [];
+    let total = 0; for (let j = 1; j < r.pts.length; j++) total += Math.hypot(r.pts[j][0] - r.pts[j - 1][0], r.pts[j][1] - r.pts[j - 1][1]);
+    let run = 0;
+    for (let j = 1; j < r.pts.length; j++) {
+      const [ax, ay] = r.pts[j - 1], [bx, by] = r.pts[j], L = Math.hypot(bx - ax, by - ay), n = Math.max(1, Math.floor(L / 15));
+      for (let k = 0; k < n; k++) {
+        const f = k / n, d = run + f * L, taper = clamp(Math.min(d, total - d) / 70, .35, 1), px = -(by - ay) / L, py = (bx - ax) / L, off = (R() - .5) * r.w * .35;
+        const s = r.w * .5 * (.75 + R() * .45) * taper, pts = [];
+        for (let v = 0; v < 7; v++) { const a = v / 7 * TAU + R() * .5, rr = s * (.75 + R() * .35); pts.push([Math.cos(a) * rr, Math.sin(a) * rr * .7]); }
+        rocks.push({ x: ax + (bx - ax) * f + px * off, y: ay + (by - ay) * f + py * off, s, pts, h: s * (.7 + R() * .5), tint: (R() - .5) * .18, moss: R() < .45 });
+      }
+      run += L;
+    }
+    rocks.sort((a, b) => a.y - b.y);
+    const poly = (o, dy, k) => { g.beginPath(); o.pts.forEach(([x, y], v) => { const X = o.x + x * k, Y = o.y + y * k + dy; v ? g.lineTo(X, Y) : g.moveTo(X, Y); }); g.closePath(); };
+    g.fillStyle = 'rgba(0,0,0,.32)'; for (const o of rocks) { poly(o, o.s * .55, 1.25); g.fill(); }
+    for (const o of rocks) {
+      g.fillStyle = shade('#3a332a', o.tint); poly(o, 0, 1); g.fill();                         // face
+      g.fillStyle = shade('#2a241d', o.tint); g.fillRect(o.x - o.s * .7, o.y, o.s * 1.4, o.s * .35);
+      g.fillStyle = shade('#6c6352', o.tint); poly(o, -o.h, .82); g.fill();                    // sommet
+      g.fillStyle = shade('#8a806a', o.tint); poly(o, -o.h - o.s * .12, .5); g.fill();         // arête éclairée
+      if (o.moss) { g.fillStyle = 'rgba(78,98,52,.75)'; g.beginPath(); g.ellipse(o.x - o.s * .15, o.y - o.h - o.s * .05, o.s * .4, o.s * .18, 0, 0, TAU); g.fill(); }
+    }
+  });
+  const { w: W, h: H } = BAL.world;
+  if (X0 < 320 || Y0 < 320 || X0 + CH > W - 320 || Y0 + CH > H - 320) {
+    for (let y = Y0; y < Y0 + CH; y += 8) for (let x = X0; x < X0 + CH; x += 8) { const ed = edgeDist(x + 4, y + 4); if (ed < 80) { g.fillStyle = `rgba(13,19,10,${clamp((80 - ed) / 150, 0, .92)})`; g.fillRect(x, y, 8, 8); } }
+  }
+}
+// Disposition du décor du Val : lisières, bois, marais, ruines, hameau, observatoire.
+function valDecor() {
+  const R = mulberry32(7), out = [], { w, h } = BAL.world, pk = a => a[Math.floor(R() * a.length)];
+  const clear = [[VAL.start.x, VAL.start.y, 170], ...VAL.phares.map(p => [p.x, p.y, 250]), [VAL.hameau.x, VAL.hameau.y, 190], [VAL.camp.x, VAL.camp.y, 280], [VAL.lair.x, VAL.lair.y, 260], [VAL.merchant.x, VAL.merchant.y, 140], [VAL.obs.x, VAL.obs.y, VAL.obs.r + 40], ...VAL.menhirs.map(([x, y]) => [x, y, 80])];
+  const free = (x, y) => !clear.some(([cx, cy, r]) => d2(x, y, cx, cy) < r * r);
+  const offRoad = (x, y) => VAL.roads.every(r => polyD2(x, y, r) > 50 * 50);
+  const add = (k, x, y, s = 1) => out.push({ k, x, y, s, v: Math.floor(R() * 4), seed: R() * 10, tall: !['shroom', 'bones', 'log', 'stump'].includes(k) });
+  const ok = (x, y) => walkable(x, y) && free(x, y) && offRoad(x, y) && edgeDist(x, y) > 30;
+  const scatter = (cx, cy, r, n, kinds, s0 = .75) => { for (let i = 0; i < n; i++) { const a = R() * TAU, d = Math.sqrt(R()) * r, x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d * .85; if (ok(x, y)) add(pk(kinds), x, y, s0 + R() * .5); } };
+  // Lisières : une forêt dense ferme le val.
+  for (let i = 0; i < 3200; i++) { const x = R() * w, y = R() * h, ed = edgeDist(x, y); if (ed < 10 && ed > -190) add(R() < .72 ? 'pine' : 'oak', x, y, 1 + R() * .45); }
+  scatter(1000, 1950, 760, 170, ['oak', 'oak', 'pine', 'pine', 'bush', 'oak']);
+  scatter(1000, 760, 700, 150, ['pine', 'pine', 'pine', 'rock', 'bush']);
+  scatter(MARSH.x, MARSH.y, MARSH.r, 190, ['deadtree', 'deadtree', 'crystal', 'spire', 'rock', 'deadtree']);
+  scatter(MARSH.x, MARSH.y, MARSH.r, 70, ['bones', 'shroom', 'bones'], .7);
+  scatter(w / 2, h / 2, Math.max(w, h), 300, ['oak', 'pine', 'bush', 'bush', 'rock', 'oak']);
+  scatter(w / 2, h / 2, Math.max(w, h), 140, ['stump', 'log', 'shroom', 'shroom'], .7);
+  // Ruines d’Astrée : piliers et pans de mur en grappes, braseros
+  for (let c = 0; c < 11; c++) { const a = R() * TAU, d = 120 + R() * 460, cx = 3850 + Math.cos(a) * d, cy = 700 + Math.sin(a) * d * .8; for (let k = 0; k < 3 + R() * 3; k++) { const x = cx + (R() - .5) * 200, y = cy + (R() - .5) * 120; if (ok(x, y)) add(R() < .6 ? 'pillar' : 'wall', x, y, .8 + R() * .3); } if (ok(cx, cy + 50)) add('brazier', cx, cy + 50, 1); }
+  // Rives du lac : buissons bas
+  for (let i = 0; i < 70; i++) { const a = R() * TAU, k = lakeR(a) * (1.1 + R() * .12), x = VAL.lake.x + Math.cos(a) * VAL.lake.rx * k, y = VAL.lake.y + Math.sin(a) * VAL.lake.ry * k; if (ok(x, y)) add(R() < .7 ? 'bush' : 'rock', x, y, .5 + R() * .3); }
+  // Pied des falaises : éboulis
+  for (const r of VAL.ridges) for (let j = 1; j < r.pts.length; j++) { const [ax, ay] = r.pts[j - 1], [bx, by] = r.pts[j], n = Math.floor(Math.hypot(bx - ax, by - ay) / 70); for (let k = 0; k < n; k++) { const x = ax + (bx - ax) * (k + R()) / n, y = ay + (by - ay) * (k + R()) / n + (R() < .5 ? -1 : 1) * (r.w / 2 + 26); if (ok(x, y)) add(R() < .8 ? 'rock' : 'spire', x, y, .55 + R() * .4); } }
+  // Observatoire : couronne de piliers ouverte au sud, braseros
+  const O = VAL.obs;
+  for (let i = 0; i < 18; i++) { const a = -Math.PI / 2 + i / 18 * TAU; if (Math.abs(a - Math.PI / 2) < .35) continue; add('pillar', O.x + Math.cos(a) * (O.r + 16), O.y + Math.sin(a) * (O.r + 16) * .8, 1); }
+  for (const a of [.9, 2.25, 4.0, 5.4]) add('brazier', O.x + Math.cos(a) * (O.r - 40), O.y + Math.sin(a) * (O.r - 40) * .8, 1.1);
+  // Hameau des Lucioles : chaumières, braseros
+  const Hm = VAL.hameau;
+  for (const [dx, dy] of [[-200, -70], [10, -150], [210, -60], [-170, 150], [190, 150]]) add('house', Hm.x + dx, Hm.y + dy, 1);
+  add('brazier', Hm.x - 60, Hm.y + 210, 1); add('brazier', Hm.x + 80, Hm.y + 215, 1);
+  // Camp des pillards et clairière de départ
+  for (const a of [.4, 2.4, 4.3]) add('brazier', VAL.camp.x + Math.cos(a) * 250, VAL.camp.y + Math.sin(a) * 190, 1);
+  add('brazier', VAL.start.x - 90, VAL.start.y + 40, 1); add('log', VAL.start.x + 70, VAL.start.y + 50, 1); add('stump', VAL.start.x - 40, VAL.start.y - 80, 1);
+  add('menhir', VAL.lair.x - 200, VAL.lair.y + 40, 1.1); add('menhir', VAL.lair.x + 210, VAL.lair.y + 30, 1.1); add('bones', VAL.lair.x + 60, VAL.lair.y + 90, 1);
+  out.sort((a, b) => a.y - b.y);
+  return out;
+}
 function makeChunk(gx, gy, kind) {
   const T = THEMES[kind], c = document.createElement('canvas'); c.width = c.height = CH;
   const g = c.getContext('2d'), X0 = gx * CH, Y0 = gy * CH, R = mulberry32(gx * 7919 + gy * 104729 + (kind === 'void' ? 13 : 0));
@@ -2374,24 +3262,17 @@ function makeChunk(gx, gy, kind) {
   const near = (x, y, r) => x + r > X0 && x - r < X0 + CH && y + r > Y0 && y - r < Y0 + CH;
   for (const b of WORLD.blobs) if (near(b.x, b.y, b.r)) { const gr = g.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r), [r, gg, bb] = rgb(T.tones[b.t]); gr.addColorStop(0, `rgba(${r},${gg},${bb},${b.a})`); gr.addColorStop(1, `rgba(${r},${gg},${bb},0)`); g.fillStyle = gr; g.fillRect(b.x - b.r, b.y - b.r, b.r * 2, b.r * 2); }
   for (const d of WORLD.dirt) if (near(d.x, d.y, d.rx)) { g.fillStyle = hexA(T.dirt, .45); g.beginPath(); g.ellipse(d.x, d.y, d.rx, d.ry, d.rot, 0, TAU); g.fill(); g.fillStyle = hexA(T.dirtD, .35); g.beginPath(); g.ellipse(d.x + 4, d.y + 3, d.rx * .6, d.ry * .5, d.rot, 0, TAU); g.fill(); }
-  // Sentiers : bord sombre, terre battue, ornières claires
-  g.lineCap = 'round'; g.lineJoin = 'round';
-  for (const pts of WORLD.paths) {
-    if (!pts.some(([x, y]) => near(x, y, 120))) continue;
-    for (const [lw, col] of [[58, hexA(T.dirtD, .55)], [44, hexA(T.dirt, .85)], [10, hexA(shade(T.dirt, .18), .35)]]) {
-      g.strokeStyle = col; g.lineWidth = lw; g.beginPath(); pts.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke();
-    }
-  }
+  paintUnder(g, X0, Y0, near);
   g.setTransform(1, 0, 0, 1, 0, 0);
   // Détails locaux : herbes, fleurs, cailloux, feuilles (ou fissures luminescentes dans le Néant)
   const V = kind === 'void';
   for (let i = 0; i < (V ? 500 : 1300); i++) {
-    const x = R() * CH, y = R() * CH, c2 = T.blades[Math.floor(R() * T.blades.length)], hgt = 4 + R() * 6;
+    const x = R() * CH, y = R() * CH, TT = marshAt(X0 + x, Y0 + y) > R() ? THEMES.void : T, c2 = TT.blades[Math.floor(R() * TT.blades.length)], hgt = 4 + R() * 6;
     g.strokeStyle = hexA(c2, .55 + R() * .35); g.lineWidth = 1.3; g.beginPath(); g.moveTo(x, y); g.lineTo(x - 1.5 - R() * 2, y - hgt); g.moveTo(x + 1, y); g.lineTo(x + 2 + R() * 2, y - hgt * .8); g.stroke();
   }
   for (let i = 0; i < 26; i++) { const x = R() * CH, y = R() * CH; g.fillStyle = hexA(T.blades[3], .25); g.beginPath(); g.ellipse(x, y, 10 + R() * 14, 4 + R() * 5, 0, 0, TAU); g.fill(); }
   for (let i = 0; i < (V ? 14 : 40); i++) { // touffes de fleurs
-    const x = R() * CH, y = R() * CH, col = T.flowers[Math.floor(R() * T.flowers.length)];
+    const x = R() * CH, y = R() * CH, FT = marshAt(X0 + x, Y0 + y) > .5 ? THEMES.void : T, col = FT.flowers[Math.floor(R() * FT.flowers.length)];
     for (let k = 0; k < 4 + R() * 5; k++) { const fx = x + R() * 14 - 7, fy = y + R() * 8 - 4; g.fillStyle = shade(col, -.35); g.fillRect(fx, fy + 1, 2, 2); g.fillStyle = col; g.fillRect(fx, fy, 2, 2); }
   }
   for (let i = 0; i < 30; i++) { const x = R() * CH, y = R() * CH, r = 1.5 + R() * 2.5; g.fillStyle = shade(T.pebble, -.35); g.beginPath(); g.ellipse(x + .8, y + .8, r, r * .7, 0, 0, TAU); g.fill(); g.fillStyle = T.pebble; g.beginPath(); g.ellipse(x, y, r, r * .7, 0, 0, TAU); g.fill(); g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(x - r * .4, y - r * .4, 1.2, 1.2); }
@@ -2404,11 +3285,16 @@ function makeChunk(gx, gy, kind) {
   }
   // Grain et légère variation de lumière
   g.globalCompositeOperation = 'overlay'; g.globalAlpha = .09; for (let x = 0; x < CH; x += 128) for (let y = 0; y < CH; y += 128) g.drawImage(GRAIN, x, y); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+  g.setTransform(1, 0, 0, 1, -X0, -Y0); paintOver(g, X0, Y0, near); g.setTransform(1, 0, 0, 1, 0, 0);
   return c;
 }
 function groundChunk(gx, gy, kind) {
   const key = `${kind}:${gx}:${gy}`; let c = CHUNKS.get(key);
-  if (!c && chunkBudget > 0) { chunkBudget--; c = makeChunk(gx, gy, kind); CHUNKS.set(key, c); }
+  if (!c && chunkBudget > 0) {
+    chunkBudget--; c = makeChunk(gx, gy, kind); CHUNKS.set(key, c);
+    // Mémoire : on oublie les morceaux les plus éloignés de la caméra.
+    if (CHUNKS.size > 44) { let far = null, fd = 0; for (const k of CHUNKS.keys()) { const [, x, y] = k.split(":"), q = d2((+x + .5) * CH, (+y + .5) * CH, cam.x, cam.y); if (q > fd) { fd = q; far = k; } } CHUNKS.delete(far); }
+  }
   return c;
 }
 function warmChunks(kind, x, y) { const gx = Math.floor(x / CH), gy = Math.floor(y / CH); for (let i = -2; i <= 2; i++) for (let j = -1; j <= 1; j++) { chunkBudget = 1; groundChunk(gx + i, gy + j, kind); } }
@@ -2417,11 +3303,25 @@ function warmChunks(kind, x, y) { const gx = Math.floor(x / CH), gy = Math.floor
 const DSPR = new Map();
 function dspr(k, v) {
   const key = k + v; let s = DSPR.get(key); if (s) return s;
-  const R = mulberry32(v * 31 + k.length * 7), W = { oak: 200, pine: 150, bush: 100, rock: 110, stump: 70, log: 120, pillar: 70, wall: 170, menhir: 70, brazier: 70, deadtree: 170, spire: 90, crystal: 90, shroom: 50, bones: 70 }[k], H = { oak: 230, pine: 260, bush: 70, rock: 80, stump: 50, log: 50, pillar: 200, wall: 130, menhir: 150, brazier: 80, deadtree: 220, spire: 190, crystal: 110, shroom: 40, bones: 34 }[k];
+  const R = mulberry32(v * 31 + k.length * 7), W = { house: 190, oak: 200, pine: 150, bush: 100, rock: 110, stump: 70, log: 120, pillar: 70, wall: 170, menhir: 70, brazier: 70, deadtree: 170, spire: 90, crystal: 90, shroom: 50, bones: 70 }[k], H = { house: 180, oak: 230, pine: 260, bush: 70, rock: 80, stump: 50, log: 50, pillar: 200, wall: 130, menhir: 150, brazier: 80, deadtree: 220, spire: 190, crystal: 110, shroom: 40, bones: 34 }[k];
   const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'), bx = W / 2, by = H - 8;
   const blob = (x, y, r, col) => { g.fillStyle = col; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); };
   const lg = (x0, y0, x1, y1, a, b) => { const gr = g.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, a); gr.addColorStop(1, b); return gr; };
-  if (k === 'oak') {
+  if (k === 'house') {
+    // Chaumière à colombages : soubassement de pierre, murs chaulés, toit de chaume, fenêtres éclairées.
+    g.fillStyle = '#4a463c'; g.fillRect(bx - 70, by - 22, 140, 22);
+    for (let i = 0; i < 9; i++) { g.fillStyle = shade('#7a7468', (R() - .5) * .3); g.fillRect(bx - 70 + i * 16, by - 22 + (i % 2) * 11, 15, 10); }
+    g.fillStyle = lg(bx - 64, 0, bx + 64, 0, '#b8a888', '#ddd0b0'); g.fillRect(bx - 64, by - 92, 128, 70);
+    g.fillStyle = '#4a3220'; for (const x of [-64, -24, 19, 59]) g.fillRect(bx + x, by - 92, 5, 70); g.fillRect(bx - 64, by - 60, 128, 4); g.fillRect(bx - 64, by - 92, 128, 5);
+    g.strokeStyle = '#4a3220'; g.lineWidth = 4; g.beginPath(); g.moveTo(bx - 60, by - 88); g.lineTo(bx - 26, by - 62); g.moveTo(bx + 23, by - 88); g.lineTo(bx + 57, by - 62); g.stroke();
+    g.fillStyle = '#2e1c10'; g.fillRect(bx - 12, by - 52, 24, 30); g.fillStyle = '#5a3a20'; g.fillRect(bx - 9, by - 49, 18, 27); g.fillStyle = '#c8a050'; g.fillRect(bx + 4, by - 37, 3, 3);
+    for (const wx of [-50, 30]) { g.fillStyle = '#ffcf6a'; g.fillRect(bx + wx, by - 50, 18, 15); g.fillStyle = '#4a3220'; g.fillRect(bx + wx + 8, by - 50, 2, 15); g.fillRect(bx + wx, by - 44, 18, 2); }
+    g.fillStyle = '#6a6458'; g.fillRect(bx + 34, by - 150, 16, 44); g.fillStyle = '#4a463c'; g.fillRect(bx + 32, by - 152, 20, 6);
+    g.fillStyle = '#4a3418'; g.beginPath(); g.moveTo(bx - 86, by - 86); g.lineTo(bx, by - 162); g.lineTo(bx + 86, by - 86); g.closePath(); g.fill();
+    g.fillStyle = lg(0, by - 156, 0, by - 90, '#9a7a40', '#7a5a2c'); g.beginPath(); g.moveTo(bx - 80, by - 91); g.lineTo(bx, by - 157); g.lineTo(bx + 80, by - 91); g.closePath(); g.fill();
+    for (let i = 0; i < 46; i++) { const t2 = R(), y = by - 93 - t2 * 60, half = 76 * (1 - t2), x = bx + (R() - .5) * 2 * half; g.strokeStyle = R() < .5 ? '#b8944e' : '#5e4422'; g.lineWidth = 2; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (x - bx) * .07, y + 11); g.stroke(); }
+    g.fillStyle = 'rgba(80,110,50,.5)'; g.fillRect(bx - 70, by - 6, 30, 6); g.fillRect(bx + 44, by - 4, 24, 4);
+  } else if (k === 'oak') {
     g.fillStyle = lg(bx - 14, 0, bx + 14, 0, '#3a2616', '#6a4a2c'); g.beginPath(); g.moveTo(bx - 16, by); g.quadraticCurveTo(bx - 8, by - 50, bx - 10, by - 110); g.lineTo(bx + 10, by - 110); g.quadraticCurveTo(bx + 8, by - 50, bx + 18, by); g.closePath(); g.fill();
     g.fillStyle = '#2e1f12'; g.fillRect(bx - 3, by - 70, 3, 22); g.fillRect(bx + 4, by - 40, 2, 14);
     const cy = by - 140, cl = [];
@@ -2496,30 +3396,10 @@ function dspr(k, v) {
   }
   s = { c, w: W, h: H, ax: bx, ay: by }; DSPR.set(key, s); return s;
 }
-// Disposition du décor, propre à chaque thème (bosquets, lisières, ruines avec braseros).
+// Décor : la disposition fixe du Val (voir valDecor).
 const DECOR_BY = {};
-function decorFor(kind) {
-  if (DECOR_BY[kind]) return DECOR_BY[kind];
-  const V = kind === 'void', R = mulberry32(V ? 77 : 7), out = [], { w, h } = BAL.world, cx = w / 2, cy = h / 2;
-  const add = (k, x, y, s = 1) => { if (x < -60 || y < -40 || x > w + 60 || y > h + 80) return; if (dist(x, y, cx, cy) < 220 && !['bones', 'shroom'].includes(k)) return; out.push({ k, x, y, s, v: Math.floor(R() * 4), seed: R() * 10, tall: !['shroom', 'bones', 'log', 'stump'].includes(k) }); };
-  const tree = () => V ? 'deadtree' : (R() < .55 ? 'oak' : 'pine');
-  for (let i = 0; i < 30; i++) { const gx = R() * w, gy = R() * h, n = 3 + Math.floor(R() * 6); for (let k = 0; k < n; k++) add(R() < .78 ? tree() : (V ? 'spire' : 'bush'), gx + (R() - .5) * 280, gy + (R() - .5) * 200, .75 + R() * .5); }
-  for (let x = -20; x < w + 40; x += 55) for (const [y, d] of [[-10, 1], [h + 30, -1]]) add(V ? 'spire' : 'pine', x + R() * 30, y + d * R() * 50, 1 + R() * .4);
-  for (let y = 0; y < h + 40; y += 55) for (const [x, d] of [[-10, 1], [w + 10, -1]]) add(V ? 'deadtree' : 'pine', x + d * R() * 50, y + R() * 30, 1 + R() * .4);
-  for (let i = 0; i < 160; i++) add(V ? (R() < .5 ? 'spire' : 'rock') : (R() < .5 ? 'bush' : 'rock'), R() * w, R() * h, .6 + R() * .6);
-  for (let i = 0; i < 60; i++) add(V ? 'crystal' : (R() < .5 ? 'stump' : 'log'), R() * w, R() * h, .7 + R() * .5);
-  for (let i = 0; i < 70; i++) add(V ? 'bones' : 'shroom', R() * w, R() * h, .8 + R() * .5);
-  // Ruines : piliers, pans de mur, menhir, et deux braseros allumés.
-  for (let i = 0; i < 12; i++) {
-    const rx = 250 + R() * (w - 500), ry = 250 + R() * (h - 500);
-    for (let k = 0; k < 3 + R() * 3; k++) add(R() < .6 ? 'pillar' : 'wall', rx + (R() - .5) * 220, ry + (R() - .5) * 140, .8 + R() * .3);
-    add('menhir', rx + (R() - .5) * 60, ry + (R() - .5) * 40, 1);
-    add('brazier', rx - 70, ry + 40, 1); add('brazier', rx + 70, ry + 40, 1);
-  }
-  out.sort((a, b) => a.y - b.y);
-  return (DECOR_BY[kind] = out);
-}
-const DSCALE = { oak: .55, pine: .55, bush: .5, rock: .5, stump: .5, log: .5, pillar: .5, wall: .5, menhir: .5, brazier: .5, deadtree: .55, spire: .5, crystal: .5, shroom: .5, bones: .5 };
+function decorFor() { return DECOR_BY.val || (DECOR_BY.val = valDecor()); }
+const DSCALE = { house: .62, oak: .55, pine: .55, bush: .5, rock: .5, stump: .5, log: .5, pillar: .5, wall: .5, menhir: .5, brazier: .5, deadtree: .55, spire: .5, crystal: .5, shroom: .5, bones: .5 };
 function drawDecorItem(d, h) {
   const s = dspr(d.k, d.v), k = DSCALE[d.k] * d.s, w = s.w * k, hh = s.h * k;
   shadowAt(d.x + 4, d.y + 2, Math.max(14, w * .45), Math.max(6, w * .16), d.k === 'oak' || d.k === 'pine' ? .9 : .7);
@@ -2541,7 +3421,7 @@ function addLight(x, y, r, c, a = 1, T = 0) { if (T) G.flashes.push({ x, y, r, c
 function lightPass(ox, oy) {
   const sc = L.s / 2, W = lc.width, H = lc.height;
   lctx.globalCompositeOperation = 'source-over'; lctx.globalAlpha = 1;
-  lctx.fillStyle = G.eclipse ? '#1e1a2c' : G.bloodMoon ? '#b4949c' : G.arena ? '#8a86a8' : THEMES[G.M.ground].ambient; lctx.fillRect(0, 0, W, H);
+  lctx.fillStyle = G.V ? valAmbient() : G.eclipse ? '#1e1a2c' : G.bloodMoon ? '#b4949c' : G.arena ? '#8a86a8' : THEMES[G.M.ground].ambient; lctx.fillRect(0, 0, W, H);
   lctx.globalCompositeOperation = 'lighter';
   for (const l of LIGHTS) {
     const x = (l.x + ox) * sc, y = (l.y + oy) * sc, r = l.r * sc;
@@ -2592,6 +3472,7 @@ function render() {
   const aura = G.weapons.find(w => w.id === 'feu');
   if (aura) { const s = wstats(aura); ctx.fillStyle = hexA(aura.evo ? '#ffd76a' : '#ff8a3a', .1 + .04 * Math.sin(t * 6)); ellipse(h.x, h.y - 10, s.radius, s.radius * .8); ctx.fill(); addLight(h.x, h.y - 10, s.radius * 1.5, '#ff8a3a', .35); }
   drawObjectiveGround(t);
+  drawValGround(t);
   drawStarField(t);
   // Point d’assaut de l’armée : bannière verte et onde qui pulse
   if (G.order) { const o = G.order, k = (t * 1.5) % 1; ctx.strokeStyle = hexA(ARMY.color, .7 * (1 - k)); ctx.lineWidth = 3; ellipse(o.x, o.y, 20 + 50 * k, (20 + 50 * k) * .5); ctx.stroke(); ctx.fillStyle = '#2a1a10'; ctx.fillRect(o.x - 1.5, o.y - 44, 3, 44); ctx.fillStyle = ARMY.color; ctx.beginPath(); ctx.moveTo(o.x + 1.5, o.y - 44); ctx.lineTo(o.x + 24 + Math.sin(t * 6) * 3, o.y - 37); ctx.lineTo(o.x + 1.5, o.y - 29); ctx.closePath(); ctx.fill(); addLight(o.x, o.y - 20, 90, ARMY.color, .45); }
@@ -2606,6 +3487,7 @@ function render() {
   if (G.cart) add(G.cart, G.cart.y, 4);
   for (const s of G.spikes) add(s, s.y, 5);
   for (const g of G.ghosts) add(g, g.y - 1, 6);
+  for (const o of G.pois) if (inV(o.x, o.y, 220)) add(o, o.y, 8);
   list.sort((a, b) => a.y - b.y);
   for (const { o, ty } of list) {
     if (ty === 0) drawDecorItem(o, h);
@@ -2615,7 +3497,8 @@ function render() {
     else if (ty === 4) drawCart(o, t);
     else if (ty === 5) drawSpike(o);
     else if (ty === 6) drawGhost(o);
-    else drawAlly(o, t);
+    else if (ty === 7) drawAlly(o, t);
+    else drawPoi(o, t);
   }
   drawOrbits(t);
   if (G.spin) drawSpin(t);
@@ -2647,12 +3530,15 @@ function render() {
   world(); ctx.globalCompositeOperation = 'lighter';
   for (const l of LIGHTS) if (l.bloom) bloom(l.x, l.y, l.bloom, l.c, l.ba || .35);
   glowStarField(t);
+  glowVal(t);
   for (const p of G.parts) if (p.add) { const a = 1 - p.t / p.T; bloom(p.x, p.y, p.r * 3.2, p.c, a * .9); }
   for (const m of MOTES) {
     const mx = v.x0 + ((m.x * L.vw + Math.sin(t * .3 + m.ph) * 30 + t * 8 * m.z) % (L.vw + 40)), my = v.y0 + ((m.y * L.vh - t * 12 * m.z) % L.vh + L.vh) % L.vh;
     bloom(mx, my, 3.5 * m.z, TH.mote, .25 + .2 * Math.sin(t * 2 + m.ph));
   }
   ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  // Brouillard de guerre : ce que Lyriel n’a pas encore vu reste dans l’ombre.
+  if (G.V) { ctx.imageSmoothingEnabled = true; ctx.globalAlpha = .9; ctx.drawImage(fogCanvas(), 0, 0, TC * TCELL, TR * TCELL); ctx.globalAlpha = 1; }
   // Éléments qui doivent rester lisibles dans la pénombre
   for (const te of G.tele) drawTele(te);
   for (const d of G.drops) drawDrop(d, t);
@@ -2700,7 +3586,9 @@ function collectLights(t, v) {
     if (d.k === 'brazier') { const f = 1 + .08 * Math.sin(t * 11 + d.seed) + .05 * Math.sin(t * 23 + d.seed); L1(d.x, d.y - 30 * d.s, 230 * f, '#ff9a4a', .95, 60 * f, .45); }
     else if (d.k === 'crystal') { const f = .8 + .2 * Math.sin(t * 2 + d.seed); L1(d.x, d.y - 25 * d.s, 170, '#b47aff', .7 * f, 50, .3 * f); }
     else if (d.k === 'menhir') L1(d.x, d.y - 45, 90, '#7fe3f3', .35 + .15 * Math.sin(t * 2 + d.seed), 26, .25);
+    else if (d.k === 'house') L1(d.x, d.y - 25, 170, '#ffb860', .2 + .55 * (G.V ? G.V.night : 1), 26, .2);
   }
+  valLights(L1, t, inV);
   for (const e of G.enemies) {
     if (e.dead || !inV(e.x, e.y, 100)) continue;
     if (e.boss) L1(e.x, e.y - 30, 260, e.T.col === '#4a1d66' ? '#c58cff' : '#ff6a4a', .7, 70, .25);
@@ -2774,7 +3662,7 @@ function drawNest(e, t) {
   hpBar(x, y - r - 30, 48, e.hp / e.maxHp, '#c58cff');
 }
 function drawEnemy(e, t) {
-  if (e.T.static) { if (e.T.cage) drawCage(e, t); else drawNest(e, t); return; }
+  if (e.T.static) { if (e.T.cage) drawCage(e, t); else if (e.T.tent) drawTent(e, t); else drawNest(e, t); return; }
   let y = e.y;
   if (e.fly) { shadowAt(e.x, y + 4, e.r * 1.1, e.r * .4, .7); y -= 16 + Math.sin(t * 5 + e.ph) * 3; }
   else shadowAt(e.x, y + 2, e.r + 5, (e.r + 5) * .42);
@@ -3064,13 +3952,14 @@ function toast(msg, kind = 'info') {
 }
 function renderSlots() {
   $('#h-weapons').innerHTML = G.weapons.map(w => { const W = WEAPONS[w.id]; return `<span class="slot${w.evo ? ' evo' : ''}" title="${w.evo ? W.evo.name : W.name}">${w.evo ? W.evo.icon : W.icon}<b>${w.evo ? '✦' : w.lvl}</b></span>`; }).join('');
+  if (G.H.kit) { $('#h-passives').innerHTML = Object.keys(G.relics).map(k => `<span class="slot p" title="${RELICS[k].name} : ${RELICS[k].desc}" style="border-color:${RARITY[RELICS[k].r].c}">${RELICS[k].icon}</span>`).join(''); return; }
   $('#h-passives').innerHTML = Object.entries(G.passives).map(([k, l]) => `<span class="slot p" title="${PASSIVES[k].name}">${PASSIVES[k].icon}<b>${l}</b></span>`).join('');
 }
 function updateHUD(dt) {
   if (!G || G.phase !== 'play') return;
   $('#h-xp').style.width = (100 * G.xp / BAL.xpNeed(G.level)).toFixed(1) + '%';
   setText('#h-lv', G.level); setText('#h-kills', fmt(G.kills)); setText('#h-or', fmt(G.gold)); setText('#h-cr', fmt(G.cr));
-  setText('#h-time', clock(G.t));
+  if (!G.V) setText('#h-time', clock(G.t));
   setText('#h-army', ARMY[G.fac].mode === 'golem' ? `${G.allies.length} / ${armyCap()} · forge ${G.army.gauge}/${Math.max(4, ARMY.nains.every - (G.army.ups.ferveur || 0))}` : `${G.allies.length} / ${armyCap()}`);
   const hf = clamp(G.hero.hp / G.hero.maxHp, 0, 1);
   $('#hb-hp').style.width = (hf * 100).toFixed(1) + '%'; $('#hb-hpd').style.width = (hf * 100).toFixed(1) + '%';
@@ -3080,7 +3969,7 @@ function updateHUD(dt) {
   if (!G.started) sub = 'Bouge pour commencer';
   else if (boss) sub = boss.final ? 'Abats le boss final !' : 'Boss en approche';
   else if (G.surgeOn) sub = 'La marée est là !';
-  setText('#h-sub', sub);
+  if (!G.V) setText('#h-sub', sub);
   const bb = $('#bossbar');
   if (boss) { bb.hidden = false; setText('#h-boss', boss.T.name); $('#h-bosshp').style.width = (100 * boss.hp / boss.maxHp).toFixed(1) + '%'; } else bb.hidden = true;
   setText('#h-sound', SFX.muted ? '🔇' : '🔊');
@@ -3132,6 +4021,7 @@ function updateSpellHUD() {
 }
 // Panneau de mission : objectif en cours et progression.
 function updateMissionHUD() {
+  if (G.V) { valHUD(); drawMinimap(performance.now() / 1000); return; }
   const ms = G.mis, M = G.M, o = ms.obj, n = M.objectives.length;
   // Mission à événements : événement en cours, ou compte à rebours du suivant.
   if (M.events) {
@@ -3185,7 +4075,7 @@ function endRun(win) {
   $('#end-box').className = 'end ' + (win ? 'win' : 'lose');
   $('#end-eyebrow').textContent = `${G.H.name} · ${G.M.name} · ${G.D.name}`;
   $('#end-title').textContent = win ? 'Mission accomplie !' : G.failReason || `${G.H.name} est tombé`;
-  const stats = [['Durée', clock(G.t)], G.M.events ? ['Supernovas', G.stats.novas || 0] : ['Objectifs', `${G.mis.done} / ${G.M.objectives.length}`], ['Ennemis vaincus', fmt(G.kills)], ['Niveau', G.level], ['Meilleur combo', '×' + fmt(G.combo.max)], ['Évolutions', G.stats.evos], ['Recrues', `${G.army.recruits} (${G.allies.length} debout)`], ['Ultimes', G.ult.uses]];
+  const V = G.V, stats = V ? [['Durée', clock(G.t)], ['Phares', `${V.lit} / 3`], ['Quêtes', `${V.done} / 6`], ['Menhirs', `${V.menhirs.filter(m => m.got).length} / 6`], ['Ennemis vaincus', fmt(G.kills)], ['Niveau', G.level], ['Supernovas', G.stats.novas || 0], ['Reliques', Object.keys(G.relics).length]] : [['Durée', clock(G.t)], G.M.events ? ['Supernovas', G.stats.novas || 0] : ['Objectifs', `${G.mis.done} / ${G.M.objectives.length}`], ['Ennemis vaincus', fmt(G.kills)], ['Niveau', G.level], ['Meilleur combo', '×' + fmt(G.combo.max)], ['Évolutions', G.stats.evos], ['Recrues', `${G.army.recruits} (${G.allies.length} debout)`], ['Ultimes', G.ult.uses]];
   $('#end-stats').innerHTML = stats.map(([k, v]) => `<div><b>${v}</b><span>${k}</span></div>`).join('');
   $('#end-runes').textContent = `+${runes} runes (total : ${META.runes})`;
   $('#end-unlocks').innerHTML = fresh.map(c => `<span>✦ Débloqué : ${c.reward}</span>`).join('');
@@ -3198,7 +4088,7 @@ function endRun(win) {
 }
 function heroPortrait(canvas, fac) { const s = unitSprite(HEROES[fac].look), g = canvas.getContext('2d'); canvas.width = s.w; canvas.height = s.h; g.imageSmoothingEnabled = false; g.clearRect(0, 0, s.w, s.h); g.drawImage(s.idle, 0, 0); }
 function buildMenu() {
-  if (!mapOpen(selMap) || MAPS[selMap].hidden) selMap = 'etoiles';
+  if (!mapOpen(selMap) || MAPS[selMap].hidden) selMap = 'val';
   if (HEROES[selFac].locked) selFac = 'elfes';
   if (!diffOpen(selDiff)) selDiff = 'normal';
   $('#facs').innerHTML = Object.values(FACTIONS).map(F => {
@@ -3228,7 +4118,7 @@ function buildMenu() {
 }
 function showMenu() {
   newRun(selFac);
-  for (const id of ['#scr-cards', '#scr-pause', '#scr-end', '#hud', '#banner', '#scr-camp']) $(id).hidden = true;
+  for (const id of ['#scr-cards', '#scr-pause', '#scr-end', '#hud', '#banner', '#scr-camp', '#scr-tree', '#scr-shop']) $(id).hidden = true;
   buildMenu(); $('#scr-menu').hidden = false;
 }
 // Le camp : améliorations permanentes achetées avec les runes, et défis à remplir.
@@ -3250,10 +4140,12 @@ function showCamp() {
 }
 function startRun() {
   SFX.init(); newRun(selFac); G.phase = 'play';
-  for (const id of ['#scr-menu', '#scr-cards', '#scr-pause', '#scr-end', '#scr-camp']) $(id).hidden = true;
-  $('#hud').hidden = false; for (const k in hudCache) delete hudCache[k]; $('#toasts').innerHTML = '';
+  for (const id of ['#scr-menu', '#scr-cards', '#scr-pause', '#scr-end', '#scr-camp', '#scr-tree', '#scr-shop']) $(id).hidden = true;
+  $('#hud').hidden = false;
+  $('#mm').hidden = $('#m-list').hidden = !G.V; $('#h-tree').hidden = !G.H.kit; MM.big = false; $('#mm').classList.remove('big');
+  if (G.V) { G.V.seenReg.clairiere = true; G.V.region = regionAt(G.hero.x, G.hero.y); reveal(G.hero.x, G.hero.y, 720); setTimeout(() => { if (G && G.phase === 'play' && G.t < 3) banner('Le Val d’Astrée', 'Rallume les Phares avant l’Éclipse', 'ult'); }, 300); } for (const k in hudCache) delete hudCache[k]; $('#toasts').innerHTML = '';
   $('#p-army').hidden = !ARMY.on;
-  $('#hint').innerHTML = lastPointer === 'mouse' ? '<b>ZQSD</b> pour bouger, la <b>souris</b> pour viser.<br><b>Clic droit</b> : plante une étoile. Trois étoiles forment une <b>constellation</b>.<br><b>Espace</b> : Pas lunaire. Traverse ta constellation pour la faire exploser.' : 'Pose le doigt et <b>glisse</b> pour te déplacer. Touche les sorts en bas.';
+  $('#hint').innerHTML = lastPointer === 'mouse' ? '<b>ZQSD</b> pour bouger, la <b>souris</b> pour viser.<br><b>Clic droit</b> : plante une étoile. Trois étoiles forment une <b>constellation</b>.<br><b>Espace</b> : Pas lunaire. Traverse ta constellation pour la faire exploser.<br>Suis la carte (en haut à droite) jusqu’aux <b>Phares</b> 🗼 et plante tes étoiles sur leurs socles.' : 'Pose le doigt et <b>glisse</b> pour te déplacer. Touche les sorts en bas.';
   updateAimBtn();
   renderSlots(); renderSpells();
   heroPortrait($('#hb-portrait'), G.fac); $('#hb-name').innerHTML = `${G.H.name}<small>${G.F.name}</small>`; $('#herobox').style.setProperty('--hc', G.F.color);
@@ -3293,7 +4185,10 @@ cv.addEventListener('pointerup', endJoy); cv.addEventListener('pointercancel', e
 window.addEventListener('keydown', ev => {
   if (!G || G.phase !== 'play' || G.over) return;
   const k = ev.key.toLowerCase();
-  if (G.modal === 'cards') { if (['1', '2', '3'].includes(ev.key)) pickCard(+ev.key - 1); if (k === 'r') reroll(); if (ev.key === ' ') ev.preventDefault(); return; }
+  if (G.modal === 'cards') { if (['1', '2', '3'].includes(ev.key)) pickCard(+ev.key - 1); if (k === 'r' && !$('#pick-reroll').hidden) reroll(); if (ev.key === ' ') ev.preventDefault(); return; }
+  if (G.modal === 'tree') { if (k === 't' || ev.key === 'Escape') closeTree(); if (ev.key === ' ' || ev.key === 'Tab') ev.preventDefault(); return; }
+  if (G.modal === 'shop') { if (['1', '2', '3', '4', '5'].includes(ev.key)) buy(+ev.key - 1); if (k === 'f' || ev.key === 'Escape') closeShop(); if (ev.key === ' ' || ev.key === 'Tab') ev.preventDefault(); return; }
+  if (ev.key === 'Tab') { ev.preventDefault(); if (G.V) toggleBigMap(); return; }
   if (ev.key === 'Escape') { if (G.paused) closePause(); else openPause(); return; }
   if (G.paused) return;
   if (KEYMAP[k]) { keys.add(KEYMAP[k]); G.started = true; ev.preventDefault(); }
@@ -3302,7 +4197,8 @@ window.addEventListener('keydown', ev => {
   if (k === 'e') castSpell(0);
   if (k === 'r') castUlt();
   if (ev.key === 'Shift') rallyArmy();
-  if (k === 'f') { const p = aimPoint(); commandArmy(p.x, p.y); }
+  if (k === 'f') { if (G.V) openShop(); else { const p = aimPoint(); commandArmy(p.x, p.y); } }
+  if (k === 't') openTree(false);
   if (k === 'c') toggleAim();
   if (k === 'm') { SFX.init(); SFX.setMuted(!SFX.muted); }
   if (k === 'p') openPause();
@@ -3315,6 +4211,9 @@ $('#h-fs').addEventListener('click', toggleFullscreen);
 $('#btn-fs').addEventListener('click', toggleFullscreen);
 $('#h-pause').addEventListener('click', openPause);
 $('#pick-reroll').addEventListener('click', reroll);
+$('#h-tree').addEventListener('click', () => { if (running()) openTree(false); });
+$('#tree-close').addEventListener('click', closeTree);
+$('#shop-close').addEventListener('click', closeShop);
 $('#p-resume').addEventListener('click', closePause);
 $('#p-restart').addEventListener('click', () => { abandonRunQuiet(); startRun(); });
 $('#p-menu').addEventListener('click', abandonRun);
@@ -3355,7 +4254,7 @@ function boot(data) {
 window.claude?.hot?.snapshot?.(() => ({ fac: selFac }));
 window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
 // Accès console pour les tests d’équilibrage.
-window.RR = { BAL, HEROES, WEAPONS, PASSIVES, ENEMIES, get G() { return G; }, get joy() { return joy; }, keys, start(fac, map, diff) { selFac = fac; if (map) selMap = map; if (diff) selDiff = diff; startRun(); }, update, render, updateHUD, pickCard, castUlt, wstats, rollOffer, applyOffer, unitSprite, castSpell, SPELLS, MAPS, get META() { return META; }, set META(v) { META = v; }, saveMeta, showCamp, showMenu, objectiveTargets, mouse, L, cam, commandArmy, rallyArmy, armyCap, recruit };
+window.RR = { BAL, HEROES, WEAPONS, PASSIVES, ENEMIES, get G() { return G; }, get joy() { return joy; }, keys, start(fac, map, diff) { selFac = fac; if (map) selMap = map; if (diff) selDiff = diff; startRun(); }, update, render, updateHUD, pickCard, castUlt, wstats, rollOffer, applyOffer, unitSprite, castSpell, SPELLS, MAPS, get META() { return META; }, set META(v) { META = v; }, saveMeta, showCamp, showMenu, objectiveTargets, mouse, L, cam, commandArmy, rallyArmy, armyCap, recruit, VAL, TREE, RELICS, learn, nodeState, openTree, closeTree, openShop, closeShop, buy, fieldTo, fieldDir, walkable, regionAt, valTargets, giveRelic, plantStar };
 })();
 </script>
 <script>
